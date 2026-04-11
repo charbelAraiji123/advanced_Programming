@@ -4,6 +4,7 @@ using Final_Project_Adv.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Final_Project_Adv.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260411170318_AddCommentAuditLogSchedule")]
+    partial class AddCommentAuditLogSchedule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,6 +61,44 @@ namespace Final_Project_Adv.Migrations
                     b.HasIndex("PerformedById");
 
                     b.ToTable("AuditLog");
+                });
+
+            modelBuilder.Entity("Final_Project_Adv.Domain.Entities.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("SubtaskId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TaskItemId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("SubtaskId");
+
+                    b.HasIndex("TaskItemId");
+
+                    b.ToTable("Comment");
                 });
 
             modelBuilder.Entity("Final_Project_Adv.Domain.Entities.Department", b =>
@@ -188,39 +229,6 @@ namespace Final_Project_Adv.Migrations
                     b.ToTable("Subtask");
                 });
 
-            modelBuilder.Entity("Final_Project_Adv.Domain.Entities.SubtaskComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AuthorId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("SubtaskId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("SubtaskId");
-
-                    b.ToTable("SubtaskComment");
-                });
-
             modelBuilder.Entity("Final_Project_Adv.Domain.Entities.TaskAssignment", b =>
                 {
                     b.Property<int>("TaskItemId")
@@ -237,39 +245,6 @@ namespace Final_Project_Adv.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("TaskAssignment");
-                });
-
-            modelBuilder.Entity("Final_Project_Adv.Domain.Entities.TaskComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AuthorId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("TaskItemId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("TaskItemId");
-
-                    b.ToTable("TaskComment");
                 });
 
             modelBuilder.Entity("Final_Project_Adv.Domain.Entities.TaskItem", b =>
@@ -363,6 +338,31 @@ namespace Final_Project_Adv.Migrations
                     b.Navigation("PerformedBy");
                 });
 
+            modelBuilder.Entity("Final_Project_Adv.Domain.Entities.Comment", b =>
+                {
+                    b.HasOne("Final_Project_Adv.Domain.Entities.Users", "Author")
+                        .WithMany("Comments")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Final_Project_Adv.Domain.Entities.Subtask", "Subtask")
+                        .WithMany("Comments")
+                        .HasForeignKey("SubtaskId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Final_Project_Adv.Domain.Entities.TaskItem", "TaskItem")
+                        .WithMany("Comments")
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Subtask");
+
+                    b.Navigation("TaskItem");
+                });
+
             modelBuilder.Entity("Final_Project_Adv.Domain.Entities.Schedule", b =>
                 {
                     b.HasOne("Final_Project_Adv.Domain.Entities.Users", "Organizer")
@@ -426,25 +426,6 @@ namespace Final_Project_Adv.Migrations
                     b.Navigation("TaskItem");
                 });
 
-            modelBuilder.Entity("Final_Project_Adv.Domain.Entities.SubtaskComment", b =>
-                {
-                    b.HasOne("Final_Project_Adv.Domain.Entities.Users", "Author")
-                        .WithMany("SubtaskComments")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Final_Project_Adv.Domain.Entities.Subtask", "Subtask")
-                        .WithMany("Comments")
-                        .HasForeignKey("SubtaskId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Author");
-
-                    b.Navigation("Subtask");
-                });
-
             modelBuilder.Entity("Final_Project_Adv.Domain.Entities.TaskAssignment", b =>
                 {
                     b.HasOne("Final_Project_Adv.Domain.Entities.TaskItem", "TaskItem")
@@ -462,25 +443,6 @@ namespace Final_Project_Adv.Migrations
                     b.Navigation("TaskItem");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Final_Project_Adv.Domain.Entities.TaskComment", b =>
-                {
-                    b.HasOne("Final_Project_Adv.Domain.Entities.Users", "Author")
-                        .WithMany("TaskComments")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Final_Project_Adv.Domain.Entities.TaskItem", "TaskItem")
-                        .WithMany("Comments")
-                        .HasForeignKey("TaskItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Author");
-
-                    b.Navigation("TaskItem");
                 });
 
             modelBuilder.Entity("Final_Project_Adv.Domain.Entities.TaskItem", b =>
@@ -547,6 +509,8 @@ namespace Final_Project_Adv.Migrations
 
                     b.Navigation("AuditLogs");
 
+                    b.Navigation("Comments");
+
                     b.Navigation("CreatedSubtasks");
 
                     b.Navigation("CreatedTasks");
@@ -555,11 +519,7 @@ namespace Final_Project_Adv.Migrations
 
                     b.Navigation("ScheduleParticipants");
 
-                    b.Navigation("SubtaskComments");
-
                     b.Navigation("TaskAssignments");
-
-                    b.Navigation("TaskComments");
                 });
 #pragma warning restore 612, 618
         }
