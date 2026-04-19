@@ -1,21 +1,31 @@
 [
   {
-    "ContainingType": "Final_Project_Adv.Controllers.TestController",
-    "Method": "InsertDepartment",
-    "RelativePath": "api/Test",
-    "HttpMethod": "POST",
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "GetOldTasks",
+    "RelativePath": "api/Manager/old-tasks",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "GetUserTaskStatus",
+    "RelativePath": "api/Manager/ProgressBYUser/{userId}",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "dto",
-        "Type": "Final_Project_Adv.Domain.DTO.CreateDepartmentDto",
+        "Name": "userId",
+        "Type": "System.Int32",
         "IsRequired": true
       }
     ],
     "ReturnTypes": [
       {
-        "Type": "Final_Project_Adv.Domain.DTO.DepartmentDto",
+        "Type": "Final_Project_Adv.Domain.DTO.UserTaskStatusDto",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -26,9 +36,229 @@
     ]
   },
   {
-    "ContainingType": "Final_Project_Adv.Controllers.TestController",
-    "Method": "InsertUser",
-    "RelativePath": "api/Test/user",
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "CreateSubtask",
+    "RelativePath": "api/Manager/Subtask/Create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Final_Project_Adv.Domain.DTO.CreateSubtaskDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "DeleteSubTaskItem",
+    "RelativePath": "api/Manager/SubTask/Delete/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "UpdateSubtask",
+    "RelativePath": "api/Manager/Subtask/Edit/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "Final_Project_Adv.Domain.DTO.UpdateSubTaskDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "SubTaskCommentAsync",
+    "RelativePath": "api/Manager/SubTaskComment",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Final_Project_Adv.Domain.DTO.CreateSubtaskCommentDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "Final_Project_Adv.Domain.DTO.UserTaskStatusDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "GetAllSubtasks",
+    "RelativePath": "api/Manager/Subtasks/GetAll",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "CreateTaskItem",
+    "RelativePath": "api/Manager/Task/Create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Final_Project_Adv.Domain.DTO.CreateTaskItemDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "DeleteTaskItem",
+    "RelativePath": "api/Manager/Task/Delete/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "UpdateTaskItem",
+    "RelativePath": "api/Manager/Task/Edit/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "Final_Project_Adv.Domain.DTO.UpdateTaskDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "TaskAssign",
+    "RelativePath": "api/Manager/TaskAssignment/{UId}/{TId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "UId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "TId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "TaskComment",
+    "RelativePath": "api/Manager/TaskComment",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Final_Project_Adv.Domain.DTO.CreateTaskCommentDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "Final_Project_Adv.Domain.DTO.UserTaskStatusDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "GetAllTasks",
+    "RelativePath": "api/Manager/Tasks/GetAllTaks",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "UnassignTask",
+    "RelativePath": "api/Manager/Unassigntask/{userId}/{taskId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "taskId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "CreateUser",
+    "RelativePath": "api/Manager/Users/Create",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -39,17 +269,38 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "GetAllusers",
+    "RelativePath": "api/Manager/users/GetAllUser",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Final_Project_Adv.Controllers.ManagerController",
+    "Method": "UpdateUser",
+    "RelativePath": "api/Manager/users/update/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
       {
-        "Type": "Final_Project_Adv.Domain.DTO.UsersDto",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "Final_Project_Adv.Domain.DTO.UpdateUserDto",
+        "IsRequired": true
       }
-    ]
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "Final_Project_Adv.Controllers.WeatherForecastController",

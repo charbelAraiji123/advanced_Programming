@@ -135,3 +135,5 @@ C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.pdb
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.genruntimeconfig.cache
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\ref\Final_Project_Adv.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\BCrypt.Net-Next.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
