@@ -11,14 +11,14 @@ public record UsersDto
 
     public int DepartmentId { get; set; }
 }
-public class CreateUserDto
+public record CreateUserDto
 {
     public string Username { get; set; }
     public string Password { get; set; }
     public string Email { get; set; }
     public string Role { get; set; }
 
-    public int DepartmentId { get; set; } // 🔥 important
+    public int DepartmentId { get; set; } // important
 }
 public record UpdateUserDto(
     string Username,
@@ -38,7 +38,7 @@ public record DepartmentDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
-public class CreateDepartmentDto
+public record CreateDepartmentDto
 {
     public string Name { get; set; }
 }
