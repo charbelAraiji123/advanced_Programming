@@ -3,7 +3,8 @@ using Final_Project_Adv.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddScoped<ITest, Test>();
+builder.Services.AddScoped<IManagerServices, ManagerServices>();
+builder.Services.AddScoped<AuditService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
