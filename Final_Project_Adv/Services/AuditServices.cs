@@ -1,4 +1,4 @@
-﻿using Final_Project_Adv.Domain.Entities;
+﻿using Final_Project_Adv.Models;
 using Final_Project_Adv.Infrastructure.Data;
 using System.Text.Json;
 

@@ -1,7 +1,7 @@
 ﻿using Final_Project_Adv.Domain.DTO;
-using Final_Project_Adv.Domain.Entities;
 using Final_Project_Adv.Domain.Enums;
 using Final_Project_Adv.Infrastructure.Data;
+using Final_Project_Adv.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections;
@@ -631,6 +631,11 @@ namespace Final_Project_Adv.Services
                 .ToListAsync();
 
             return tasks;
+        }
+        public async Task<Users?> GetUserByEmailAsync(string email)
+        {
+            return await context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
     }
         
