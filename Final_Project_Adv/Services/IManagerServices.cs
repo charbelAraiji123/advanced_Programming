@@ -1,4 +1,5 @@
 ﻿using Final_Project_Adv.Domain.DTO;
+using Final_Project_Adv.Models;
 
 namespace Final_Project_Adv.Services;
     public interface IManagerServices
@@ -30,4 +31,6 @@ namespace Final_Project_Adv.Services;
     Task<SubtaskCommentDto> SubTaskCommentAsync(CreateSubtaskCommentDto dto);
 
     Task<List<TaskWithSubtasksDto>> GetOldTasksAsync();
+
+    Task<Users?> GetUserByEmailAsync(string email);
 }

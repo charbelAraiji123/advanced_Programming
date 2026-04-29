@@ -1,0 +1,59 @@
+﻿@model Final_Project_Adv.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/Login.css" />
+</head>
+<body>
+    <div class="login-wrap">
+        <div class="login-left">
+            <div class="brand">Task<span>Flow</span></div>
+            <div class="tagline">
+                <strong>Welcome back</strong>
+                Manage your tasks and stay on top of everything.
+            </div>
+        </div>
+        <div class="login-right">
+            <h1 class="login-title">Sign in</h1>
+            <p class="login-sub">Enter your credentials to continue</p>
+
+            <form action="/Account/Login" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="field">
+                    <label>Email address</label>
+                    <input type="email" name="Email" placeholder="you@example.com" />
+                </div>
+
+                <div class="field">
+                    <div class="field-row">
+                        <label>Password</label>
+                        <a href="#" class="forgot">Forgot password?</a>
+                    </div>
+                    <input type="password" name="Password" placeholder="••••••••" />
+                </div>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" name="RememberMe" id="remember" />
+                    <label for="remember">Remember me for 30 days</label>
+                </div>
+
+                <button type="submit" class="btn-login">Sign in</button>
+            </form>
+
+            <div class="register">
+                Don't have an account? <a asp-action="Register">Create one</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

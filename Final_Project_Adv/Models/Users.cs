@@ -1,5 +1,5 @@
 ﻿using TaskStatusEnum = Final_Project_Adv.Domain.Enums.TaskStatus;
-namespace Final_Project_Adv.Domain.Entities
+namespace Final_Project_Adv.Models
 {
     
     public class Users

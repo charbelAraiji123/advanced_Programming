@@ -1,4 +1,4 @@
-﻿using Final_Project_Adv.Domain.Entities;
+﻿using Final_Project_Adv.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Final_Project_Adv.Infrastructure.Data;

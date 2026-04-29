@@ -275,3 +275,16 @@ C:\Users\User\OneDrive\Desktop\advanced_Programming\Final_Project_Adv\obj\Debug\
 C:\Users\User\OneDrive\Desktop\advanced_Programming\Final_Project_Adv\obj\Debug\net8.0\ref\Final_Project_Adv.dll
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\BCrypt.Net-Next.dll
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.RazorAssemblyInfo.cache
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.RazorAssemblyInfo.cs
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Final_Project_Adv.staticwebassets.runtime.json
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\BouncyCastle.Cryptography.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\MailKit.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\MimeKit.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
