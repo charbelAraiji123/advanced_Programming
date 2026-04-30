@@ -33,4 +33,6 @@ namespace Final_Project_Adv.Services;
     Task<List<TaskWithSubtasksDto>> GetOldTasksAsync();
 
     Task<Users?> GetUserByEmailAsync(string email);
+
+    Task<IEnumerable<TaskDashboardItemDto>> GetDashboardTasksAsync();
 }

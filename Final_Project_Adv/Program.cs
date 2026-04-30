@@ -1,11 +1,15 @@
 ﻿using Final_Project_Adv.Infrastructure.Data;
 using Final_Project_Adv.Services;
+using Final_Project_Adv.Services.Final_Project_Adv.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<IManagerServices, ManagerServices>();
+builder.Services.AddScoped<IEmployeeServices, EmployeeServices>();
+builder.Services.AddScoped<AuditService>(); 
 builder.Services.AddScoped<IAuditService, AuditService>(); 
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
@@ -19,9 +23,9 @@ builder.Services.AddAuthentication("CookieAuth")
     .AddCookie("CookieAuth", options =>
     {
         options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllersWithViews();
 
