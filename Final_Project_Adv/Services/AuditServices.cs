@@ -6,7 +6,7 @@ namespace Final_Project_Adv.Services
 {
     
 
-    public class AuditService
+    public class AuditService:IAuditService
     {
         private readonly AppDbContext context;
 

@@ -23,9 +23,9 @@ namespace Final_Project_Adv.Services
     public class ManagerServices : IManagerServices
     {
         private readonly AppDbContext context;
-        private readonly AuditService auditService;
+        private readonly IAuditService auditService;
 
-        public ManagerServices(AppDbContext context, AuditService auditService)
+        public ManagerServices(AppDbContext context, IAuditService auditService)
         {
             this.context = context;
             this.auditService = auditService;
