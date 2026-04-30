@@ -28,16 +28,23 @@ namespace Final_Project_Adv.Controllers
             var result = await ManagerServices.CreateTaskAsync(dto);
             return CreatedAtAction(nameof(CreateTaskItem), new { id = result.Id }, result);
         }
-        [HttpDelete("Task/Delete/{id}")]
-        public async Task<IActionResult> DeleteTaskItem(int id)
-        {
 
-            var deleted = await ManagerServices.DeleteTaskAsync(id);
+
+        // Inside ManagerController.cs
+
+        [HttpDelete("Task/Delete/{id}")]
+        public async Task<IActionResult> DeleteTaskItem(int id, [FromQuery] int requestingUserId)
+        {
+            // Now the interface accepts 2 arguments, so this will compile!
+            var deleted = await ManagerServices.DeleteTaskAsync(id, requestingUserId);
+
             if (!deleted)
                 return NotFound(new { error = $"Task with ID {id} not found." });
 
             return NoContent();
         }
+
+
         [HttpPost("Subtask/Create")]
         public async Task<IActionResult> CreateSubtask([FromBody] CreateSubtaskDto dto)
         {

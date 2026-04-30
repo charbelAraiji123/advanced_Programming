@@ -9,25 +9,20 @@ namespace Final_Project_Adv.Controllers
         private readonly IManagerServices _managerServices;
         private readonly JwtService _jwtService;
 
-        public AccountController(
-            IManagerServices managerServices,
-            JwtService jwtService)
+        public AccountController(IManagerServices managerServices, JwtService jwtService)
         {
             _managerServices = managerServices;
             _jwtService = jwtService;
         }
+
         [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
             var user = await _managerServices.GetUserByEmailAsync(model.Email);
 
@@ -37,8 +32,11 @@ namespace Final_Project_Adv.Controllers
                 return View(model);
             }
 
-            var token = _jwtService.GenerateToken(user);
+            // Session Storage
+            HttpContext.Session.SetString("UserRole", user.Role);
+            HttpContext.Session.SetString("UserName", user.Username);
 
+            var token = _jwtService.GenerateToken(user);
             Response.Cookies.Append("AuthToken", token, new CookieOptions
             {
                 HttpOnly = true,
@@ -47,12 +45,18 @@ namespace Final_Project_Adv.Controllers
                 Expires = DateTimeOffset.UtcNow.AddMinutes(60)
             });
 
+            // Role-Based Redirection
+            if (string.Equals(user.Role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("AdminPanel", "Admin");
+            }
+
             return RedirectToAction("Index", "Home");
         }
 
-
         public IActionResult Logout()
         {
+            HttpContext.Session.Clear();
             Response.Cookies.Delete("AuthToken");
             return RedirectToAction("Login");
         }

@@ -5,7 +5,7 @@
 namespace Final_Project_Adv.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTaskStatus : Migration
+    public partial class AddUserRoles : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

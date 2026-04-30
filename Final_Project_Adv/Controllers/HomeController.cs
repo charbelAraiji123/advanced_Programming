@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Final_Project_Adv.Controllers
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    public IActionResult Index()
     {
-        public IActionResult Index()
-        {
-            return View();
-        }
+        // Retrieve the role from session
+        ViewBag.Role = HttpContext.Session.GetString("UserRole") ?? "Guest";
+        ViewBag.Username = HttpContext.Session.GetString("UserName") ?? "User";
+
+        return View();
     }
 }
