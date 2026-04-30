@@ -178,3 +178,15 @@ public record TaskWithSubtasksDto(
     DateTime UpdatedAt,
     List<SubtaskDto> Subtasks
 );
+public record TaskDashboardItemDto(
+    int Id,
+    string Title,
+    string Description,
+    TaskStatusEnum Status,
+    int CreatedById,
+    int DepartmentId,
+    string DepartmentName,
+    string? AssignedUsername,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+);

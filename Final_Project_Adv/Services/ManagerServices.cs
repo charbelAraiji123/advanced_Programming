@@ -4,9 +4,7 @@ using Final_Project_Adv.Infrastructure.Data;
 using Final_Project_Adv.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+
 
 namespace Final_Project_Adv.Services
 {
@@ -636,6 +634,28 @@ namespace Final_Project_Adv.Services
         {
             return await context.Users
                 .FirstOrDefaultAsync(u => u.Email == email);
+        }
+        public async Task<IEnumerable<TaskDashboardItemDto>> GetDashboardTasksAsync()
+        {
+            return await context.TaskItem
+                .Include(t => t.Department)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(a => a.User)
+                .Select(t => new TaskDashboardItemDto(
+                    t.Id,
+                    t.Title,
+                    t.Description,
+                    t.Status,
+                    t.CreatedById,
+                    t.DepartmentId,
+                    t.Department.Name,
+                    t.TaskAssignments.FirstOrDefault() != null
+                        ? t.TaskAssignments.FirstOrDefault()!.User.Username
+                        : null,
+                    t.CreatedAt,
+                    t.UpdatedAt
+                ))
+                .ToListAsync();
         }
     }
         
