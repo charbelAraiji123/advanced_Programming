@@ -20,17 +20,19 @@ namespace Final_Project_Adv.Services
             AvailableUsers = availableUsers;
         }
     }
+
     public class ManagerServices : IManagerServices
     {
         private readonly AppDbContext context;
         private readonly AuditService auditService;
+        private readonly PermissionService permissionService;
 
-        public ManagerServices(AppDbContext context, AuditService auditService)
+        public ManagerServices(AppDbContext context, AuditService auditService, PermissionService permissionService)
         {
             this.context = context;
             this.auditService = auditService;
+            this.permissionService = permissionService;
         }
-
 
         public async Task<UsersDto> CreateUserAsync(CreateUserDto dto)
         {
@@ -57,8 +59,10 @@ namespace Final_Project_Adv.Services
                 DepartmentId = user.DepartmentId
             };
         }
+
         public async Task<TaskItemDto> CreateTaskAsync(CreateTaskItemDto dto)
         {
+            await permissionService.RequirePermissionAsync(dto.CreatedById, PermissionType.CreateTask);
             var task = new TaskItem
             {
                 Title = dto.Title,
@@ -72,7 +76,6 @@ namespace Final_Project_Adv.Services
 
             context.TaskItem.Add(task);
             await context.SaveChangesAsync();
-            
 
             await auditService.LogAsync(
                 "Created",
@@ -82,6 +85,7 @@ namespace Final_Project_Adv.Services
                 task,
                 dto.CreatedById
             );
+
             return new TaskItemDto(
                 task.Id,
                 task.Title,
@@ -93,33 +97,33 @@ namespace Final_Project_Adv.Services
                 task.UpdatedAt
             );
         }
-        public async Task<bool> DeleteTaskAsync(int id) {
-         
-            // 🔥 Log minimal info
+
+        public async Task<bool> DeleteTaskAsync(int id, int requestingUserId)
+        {
+            await permissionService.RequirePermissionAsync(requestingUserId, PermissionType.DeleteTask);
+
             await auditService.LogAsync(
                 "Deleted",
                 "TaskItem",
                 id,
                 null,
                 null,
-                0 // no user
+                requestingUserId
             );
 
-            // 🔥 LINQ delete
             var deleted = await context.TaskItem
                 .Where(t => t.Id == id)
                 .ExecuteDeleteAsync();
 
             return deleted > 0;
         }
-        
-        
 
-        public async Task<SubtaskDto> CreateSubtaskAsync(CreateSubtaskDto dto) {
+        public async Task<SubtaskDto> CreateSubtaskAsync(CreateSubtaskDto dto)
+        {
+            await permissionService.RequirePermissionAsync(dto.CreatedById, PermissionType.CreateSubtask);
 
             var subtask = new Subtask
             {
-
                 Title = dto.Title,
                 Description = dto.Description,
                 Status = Domain.Enums.TaskStatus.Pending,
@@ -132,7 +136,6 @@ namespace Final_Project_Adv.Services
 
             context.Subtask.Add(subtask);
             await context.SaveChangesAsync();
-           
 
             await auditService.LogAsync(
                 "Created",
@@ -153,18 +156,17 @@ namespace Final_Project_Adv.Services
                 subtask.CreatedById,
                 subtask.CreatedAt,
                 subtask.UpdatedAt
-
-                );
-
-
+            );
         }
+
         public async Task<bool> DeleteSubTaskAsync(int id)
         {
             var deleted = await context.Subtask
-            .Where(item => item.Id == id).ExecuteDeleteAsync();
+                .Where(item => item.Id == id).ExecuteDeleteAsync();
 
             return deleted > 0;
         }
+
         public async Task<UsersDto> UpdateUserAsync(int id, UpdateUserDto dto)
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
@@ -172,14 +174,11 @@ namespace Final_Project_Adv.Services
                 throw new KeyNotFoundException($"User with ID {id} does not exist.");
 
             user.Username = dto.Username;
-            user.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password); // 🔥 hashed
+            user.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             user.Email = dto.Email;
             user.Role = dto.Role;
             user.DepartmentId = dto.DepartmentId;
-            user.CreatedAt = DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
-
-
 
             await context.SaveChangesAsync();
 
@@ -192,17 +191,19 @@ namespace Final_Project_Adv.Services
                 DepartmentId = user.DepartmentId
             };
         }
+
         public async Task<IEnumerable<UsersDto>> GetAllUsersAsync()
         {
-            return await context.Users.Select(user => new UsersDto {
+            return await context.Users.Select(user => new UsersDto
+            {
                 Id = user.Id,
                 Username = user.Username,
                 Email = user.Email,
                 Role = user.Role,
-                DepartmentId = user.DepartmentId }).ToListAsync();
-
-
+                DepartmentId = user.DepartmentId
+            }).ToListAsync();
         }
+
         public async Task<IEnumerable<TaskItemDto>> GetAllTasksAsync()
         {
             return await context.TaskItem.Select(taskItem => new TaskItemDto(
@@ -214,23 +215,22 @@ namespace Final_Project_Adv.Services
                 taskItem.DepartmentId,
                 taskItem.CreatedAt,
                 taskItem.UpdatedAt
-                    )).ToListAsync();
-
+            )).ToListAsync();
         }
+
         public async Task<IEnumerable<SubtaskDto>> GetAllSubTasksAsync()
-        { 
+        {
             return await context.Subtask.Select(subtask => new SubtaskDto(
-                
-                    subtask.Id,
-                    subtask.Title,
-                    subtask.Description,
-                    subtask.Status,
-                    subtask.TaskItemId,  
-                    subtask.AssignedToId,
-                    subtask.CreatedById,
-                    subtask.CreatedAt,
-                    subtask.UpdatedAt
-              )).ToListAsync();
+                subtask.Id,
+                subtask.Title,
+                subtask.Description,
+                subtask.Status,
+                subtask.TaskItemId,
+                subtask.AssignedToId,
+                subtask.CreatedById,
+                subtask.CreatedAt,
+                subtask.UpdatedAt
+            )).ToListAsync();
         }
 
         public async Task<TaskItemDto> UpdateTasksAsync(int id, UpdateTaskDTO dto)
@@ -240,19 +240,6 @@ namespace Final_Project_Adv.Services
             if (task is null)
                 throw new KeyNotFoundException($"Task with ID {id} does not exist.");
 
-            // Update fields
-            task.Title = dto.Title;
-
-            task.Description = dto.Description;
-
-            task.DepartmentId = dto.DepartmentId;
-
-            // Convert string → enum
-            task.Status = Enum.Parse<Domain.Enums.TaskStatus>(dto.Status);
-
-            task.UpdatedAt = DateTime.Now;
-
-            await context.SaveChangesAsync();
             var oldTask = new
             {
                 task.Title,
@@ -263,8 +250,9 @@ namespace Final_Project_Adv.Services
 
             task.Title = dto.Title;
             task.Description = dto.Description;
-            task.Status = Enum.Parse<Domain.Enums.TaskStatus>(dto.Status);
             task.DepartmentId = dto.DepartmentId;
+            task.Status = Enum.Parse<Domain.Enums.TaskStatus>(dto.Status);
+            task.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
 
@@ -277,7 +265,6 @@ namespace Final_Project_Adv.Services
                 task.CreatedById
             );
 
-            // Return DTO
             return new TaskItemDto(
                 task.Id,
                 task.Title,
@@ -289,20 +276,13 @@ namespace Final_Project_Adv.Services
                 task.UpdatedAt
             );
         }
+
         public async Task<SubtaskDto> UpdateSubTasksAsync(int id, UpdateSubTaskDTO dto)
-        { 
-        
-            var subtask = await context.Subtask.FirstOrDefaultAsync( t => t.Id == id);
-            if(subtask is null)
+        {
+            var subtask = await context.Subtask.FirstOrDefaultAsync(t => t.Id == id);
+            if (subtask is null)
                 throw new KeyNotFoundException($"SubTask with ID {id} does not exist.");
 
-            subtask.Title = dto.Title;
-            subtask.Description = dto.Description;
-            subtask.Status = Enum.Parse<Domain.Enums.TaskStatus>(dto.Status);
-            subtask.AssignedToId = dto.AssignedId;
-            subtask.UpdatedAt = DateTime.Now;
-
-            await context.SaveChangesAsync();
             var oldSubtask = new
             {
                 subtask.Title,
@@ -315,6 +295,7 @@ namespace Final_Project_Adv.Services
             subtask.Description = dto.Description;
             subtask.Status = Enum.Parse<Domain.Enums.TaskStatus>(dto.Status);
             subtask.AssignedToId = dto.AssignedId;
+            subtask.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
 
@@ -339,31 +320,21 @@ namespace Final_Project_Adv.Services
                 subtask.UpdatedAt
             );
         }
+
         public async Task<TaskAssignmentDto> TaskAssignAsync(int userId, int taskId)
         {
-            // Check if user exists
-            var user = await context.Users
-                .FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var task = await context.TaskItem.FirstOrDefaultAsync(t => t.Id == taskId);
 
-            var task = await context.TaskItem
-                .FirstOrDefaultAsync(t => t.Id == taskId);
+            if (user is null) throw new KeyNotFoundException($"User with ID {userId} does not exist.");
+            if (task is null) throw new KeyNotFoundException($"Task with ID {taskId} does not exist.");
 
-            if (user is null)
-                throw new KeyNotFoundException($"User with ID {userId} does not exist.");
-
-            if (task is null)
-                throw new KeyNotFoundException($"Task with ID {taskId} does not exist.");
-
-            var userTaskCount = await context.TaskAssignment
-                .CountAsync(a => a.UserId == userId);
+            var userTaskCount = await context.TaskAssignment.CountAsync(a => a.UserId == userId);
 
             if (userTaskCount >= 2)
             {
                 var usersWithNoTasks = await context.Users
-                    .Where(u =>
-                        u.DepartmentId == task.DepartmentId && // ✅ same department
-                        !context.TaskAssignment.Any(a => a.UserId == u.Id)
-                    )
+                    .Where(u => u.DepartmentId == task.DepartmentId && !context.TaskAssignment.Any(a => a.UserId == u.Id))
                     .Select(u => new UsersDto
                     {
                         Id = u.Id,
@@ -371,25 +342,15 @@ namespace Final_Project_Adv.Services
                         Email = u.Email,
                         Role = u.Role,
                         DepartmentId = u.DepartmentId
-                    })
-                    .ToListAsync();
+                    }).ToListAsync();
 
-                throw new TaskLimitExceededException(
-                    "This user already has the maximum allowed number of tasks (2).",
-                    usersWithNoTasks
-                );
+                throw new TaskLimitExceededException("This user already has the maximum allowed number of tasks (2).", usersWithNoTasks);
             }
-            
-            
 
-            // OPTIONAL: Check if already assigned
-            var existingAssignment = await context.TaskAssignment
-                .FirstOrDefaultAsync(a => a.TaskItemId == taskId);
+            var existingAssignment = await context.TaskAssignment.FirstOrDefaultAsync(a => a.TaskItemId == taskId);
+            if (existingAssignment != null) throw new Exception("Task is already assigned.");
 
-            if (existingAssignment != null)
-                throw new Exception("Task is already assigned.");
             var lebanonTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Beirut");
-            // Create assignment
             var assignment = new TaskAssignment
             {
                 TaskItemId = taskId,
@@ -399,95 +360,40 @@ namespace Final_Project_Adv.Services
 
             context.TaskAssignment.Add(assignment);
             await context.SaveChangesAsync();
-            
 
-            await auditService.LogAsync(
-                "Assigned",
-                "TaskAssignment",
-                taskId,
-                null,
-                new { userId, taskId },
-                userId
-            );
+            await auditService.LogAsync("Assigned", "TaskAssignment", taskId, null, new { userId, taskId }, userId);
 
-            // Return DTO
             return new TaskAssignmentDto(
-            task.Id,
-            new TaskItemDto(
                 task.Id,
-                task.Title,
-                task.Description,
-                task.Status,
-                task.CreatedById,
-                task.DepartmentId,
-                task.CreatedAt,
-                task.UpdatedAt
-
-                    ),
-             user.Id,
-            new UsersDto
-             {
-                 Id = user.Id,
-                 Username = user.Username,
-                Email = user.Email,
-                Role = user.Role,
-                DepartmentId = user.DepartmentId
-    },
-    DateTime.UtcNow
-);
+                new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.CreatedById, task.DepartmentId, task.CreatedAt, task.UpdatedAt),
+                user.Id,
+                new UsersDto { Id = user.Id, Username = user.Username, Email = user.Email, Role = user.Role, DepartmentId = user.DepartmentId },
+                DateTime.UtcNow
+            );
         }
+
         public async Task<TaskAssignmentDto> UnassignTaskAsync(int userId, int taskId)
         {
-            // 1. Find the assignment
-            var assignment = await context.TaskAssignment
-                .FirstOrDefaultAsync(a => a.UserId == userId && a.TaskItemId == taskId);
+            var assignment = await context.TaskAssignment.FirstOrDefaultAsync(a => a.UserId == userId && a.TaskItemId == taskId);
+            if (assignment is null) throw new KeyNotFoundException("This task is not assigned to this user.");
 
-            if (assignment is null)
-                throw new KeyNotFoundException("This task is not assigned to this user.");
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var task = await context.TaskItem.FirstOrDefaultAsync(t => t.Id == taskId);
 
-            // 2. Get related data BEFORE deleting (for DTO)
-            var user = await context.Users
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            var task = await context.TaskItem
-                .FirstOrDefaultAsync(t => t.Id == taskId);
-
-            // 3. Remove assignment
             context.TaskAssignment.Remove(assignment);
             await context.SaveChangesAsync();
-            await auditService.LogAsync(
-                    "Unassigned",
-                    "TaskAssignment",
-                    taskId,
-                    new { userId, taskId },
-                    null,
-                    userId
-);
-            // 4. Return DTO (same structure as assign)
+
+            await auditService.LogAsync("Unassigned", "TaskAssignment", taskId, new { userId, taskId }, null, userId);
+
             return new TaskAssignmentDto(
                 assignment.TaskItemId,
-                new TaskItemDto(
-                    task.Id,
-                    task.Title,
-                    task.Description,
-                    task.Status,
-                    task.CreatedById,
-                    task.DepartmentId,
-                    task.CreatedAt,
-                    task.UpdatedAt
-                ),
+                new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.CreatedById, task.DepartmentId, task.CreatedAt, task.UpdatedAt),
                 assignment.UserId,
-                new UsersDto
-                {
-                    Id = user.Id,
-                    Username = user.Username,
-                    Email = user.Email,
-                    Role = user.Role,
-                    DepartmentId = user.DepartmentId
-                },
-                assignment.AssignedAt // original assignment time
+                new UsersDto { Id = user.Id, Username = user.Username, Email = user.Email, Role = user.Role, DepartmentId = user.DepartmentId },
+                assignment.AssignedAt
             );
         }
+
         public async Task<UserTaskStatusDto> GetUserTaskStatus(int userId)
         {
             var user = await context.Users
@@ -496,8 +402,7 @@ namespace Final_Project_Adv.Services
                         .ThenInclude(t => t.Subtasks)
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
-            if (user == null)
-                throw new KeyNotFoundException("User not found");
+            if (user == null) throw new KeyNotFoundException("User not found");
 
             return new UserTaskStatusDto
             {
@@ -508,7 +413,6 @@ namespace Final_Project_Adv.Services
                     TaskId = ta.TaskItem.Id,
                     Title = ta.TaskItem.Title,
                     Status = ta.TaskItem.Status.ToString(),
-
                     Subtasks = ta.TaskItem.Subtasks.Select(st => new SubtaskStatusDto
                     {
                         SubtaskId = st.Id,
@@ -518,6 +422,7 @@ namespace Final_Project_Adv.Services
                 }).ToList()
             };
         }
+
         public async Task<TaskCommentDto> TaskCommentAsync(CreateTaskCommentDto dto)
         {
             var lebanonTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Beirut");
@@ -529,35 +434,27 @@ namespace Final_Project_Adv.Services
                 CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone),
                 UpdatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone),
             };
-            
+
             context.TaskComment.Add(taskComment);
             await context.SaveChangesAsync();
-            
 
-            await auditService.LogAsync(
-                "CommentAdded",
-                "TaskComment",
-                taskComment.Id,
-                null,
-                taskComment,
-                dto.AuthorId
-            );
+            await auditService.LogAsync("CommentAdded", "TaskComment", taskComment.Id, null, taskComment, dto.AuthorId);
+
             return new TaskCommentDto
             {
-                    Id = taskComment.Id,
-                    Content = taskComment.Content,
-                    AuthorId = taskComment.AuthorId,
-                   TaskItemId = taskComment.TaskItemId,
-                   CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone),
-                   UpdatedAt= TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone),
-
-
+                Id = taskComment.Id,
+                Content = taskComment.Content,
+                AuthorId = taskComment.AuthorId,
+                TaskItemId = taskComment.TaskItemId,
+                CreatedAt = taskComment.CreatedAt,
+                UpdatedAt = taskComment.UpdatedAt
             };
         }
+
         public async Task<SubtaskCommentDto> SubTaskCommentAsync(CreateSubtaskCommentDto dto)
         {
             var lebanonTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Beirut");
-            var SubtaskComment = new SubtaskComment
+            var subtaskComment = new SubtaskComment
             {
                 Content = dto.Content,
                 AuthorId = dto.AuthorId,
@@ -566,77 +463,47 @@ namespace Final_Project_Adv.Services
                 UpdatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone),
             };
 
-            context.SubtaskComment.Add(SubtaskComment);
-            
+            context.SubtaskComment.Add(subtaskComment);
             await context.SaveChangesAsync();
 
-            await auditService.LogAsync(
-                "CommentAdded",
-                "SubtaskComment",
-                SubtaskComment.Id,
-                null,
-                SubtaskComment,
-                dto.AuthorId
-            );
+            await auditService.LogAsync("CommentAdded", "SubtaskComment", subtaskComment.Id, null, subtaskComment, dto.AuthorId);
+
             return new SubtaskCommentDto
             {
-                Id = SubtaskComment.Id,
-                Content = SubtaskComment.Content,
-                AuthorId = SubtaskComment.AuthorId,
-                SubtaskId = SubtaskComment.SubtaskId,
-                CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone),
-                UpdatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone),
-
-
+                Id = subtaskComment.Id,
+                Content = subtaskComment.Content,
+                AuthorId = subtaskComment.AuthorId,
+                SubtaskId = subtaskComment.SubtaskId,
+                CreatedAt = subtaskComment.CreatedAt,
+                UpdatedAt = subtaskComment.UpdatedAt
             };
         }
+
         public async Task<List<TaskWithSubtasksDto>> GetOldTasksAsync()
         {
             var lebanonTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Beirut");
             var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, lebanonTimeZone);
             var twoWeeksAgo = now.AddDays(-14);
 
-            var tasks = await context.TaskItem
-                .Where(t =>
-                    t.CreatedAt <= twoWeeksAgo ||
-                    t.UpdatedAt <= twoWeeksAgo
-                )
+            return await context.TaskItem
+                .Where(t => t.CreatedAt <= twoWeeksAgo || t.UpdatedAt <= twoWeeksAgo)
                 .Select(t => new TaskWithSubtasksDto(
-                    t.Id,
-                    t.Title,
-                    t.Description,
-                    t.Status,
-                    t.CreatedById,
-                    t.DepartmentId,
-                    t.CreatedAt,
-                    t.UpdatedAt,
+                    t.Id, t.Title, t.Description, t.Status, t.CreatedById, t.DepartmentId, t.CreatedAt, t.UpdatedAt,
                     t.Subtasks
-                        .Where(s =>
-                            s.CreatedAt <= twoWeeksAgo ||
-                            s.UpdatedAt <= twoWeeksAgo
-                        )
-                        .Select(s => new SubtaskDto(
-                            s.Id,
-                            s.Title,
-                            s.Description,
-                            s.Status,
-                            s.TaskItemId,
-                            s.AssignedToId,
-                            s.CreatedById,
-                            s.CreatedAt,
-                            s.UpdatedAt
-                        ))
+                        .Where(s => s.CreatedAt <= twoWeeksAgo || s.UpdatedAt <= twoWeeksAgo)
+                        .Select(s => new SubtaskDto(s.Id, s.Title, s.Description, s.Status, s.TaskItemId, s.AssignedToId, s.CreatedById, s.CreatedAt, s.UpdatedAt))
                         .ToList()
-                ))
-                .ToListAsync();
-
-            return tasks;
+                )).ToListAsync();
         }
+
         public async Task<Users?> GetUserByEmailAsync(string email)
         {
-            return await context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
+            return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        public Task<bool> DeleteTaskAsync(int id)
+        {
+            throw new NotImplementedException();
         }
     }
-        
-    }
+}

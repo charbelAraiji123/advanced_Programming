@@ -17,22 +17,22 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLog { get; set; }
     public DbSet<Schedule> Schedule { get; set; }
     public DbSet<ScheduleParticipant> ScheduleParticipant { get; set; }
+    public DbSet<UserPermission> UserPermission { get; set; }  // ← new
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // ── Subtask → AssignedTo (optional, no cascade) ──────────────────────
+        // ── Subtask → AssignedTo (optional, no cascade) ───────────────────────
         modelBuilder.Entity<Subtask>()
             .HasOne(s => s.AssignedTo)
             .WithMany(u => u.AssignedSubtasks)
             .HasForeignKey(s => s.AssignedToId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Subtask → CreatedBy (restrict to avoid multiple cascade paths)
         modelBuilder.Entity<Subtask>()
             .HasOne(s => s.CreatedBy)
-            .WithMany(u => u.CreatedSubtasks)          // add this nav in Users
+            .WithMany(u => u.CreatedSubtasks)
             .HasForeignKey(s => s.CreatedById)
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -50,10 +50,7 @@ public class AppDbContext : DbContext
             .HasOne(ta => ta.User)
             .WithMany(u => u.TaskAssignments)
             .HasForeignKey(ta => ta.UserId)
-            .OnDelete(DeleteBehavior.Restrict);        // avoid multi-cascade on Users
-
-        // ── Comment ──────────────────────────────────────────────────────────
-        // Inside OnModelCreating:
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ── TaskComment ───────────────────────────────────────────────────────
         modelBuilder.Entity<TaskComment>()
@@ -79,19 +76,16 @@ public class AppDbContext : DbContext
             .HasOne(c => c.Subtask)
             .WithMany(s => s.Comments)
             .HasForeignKey(c => c.SubtaskId)
-            .OnDelete(DeleteBehavior.NoAction);    // Subtask already cascades from TaskItem     // Subtask already cascades from TaskItem
+            .OnDelete(DeleteBehavior.NoAction);
 
-        // ── AuditLog ─────────────────────────────────────────────────────────
+        // ── AuditLog ──────────────────────────────────────────────────────────
         modelBuilder.Entity<AuditLog>()
             .HasOne(a => a.PerformedBy)
             .WithMany(u => u.AuditLogs)
             .HasForeignKey(a => a.PerformedById)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // EntityType + EntityId are plain columns (no FK) — intentional
-        // so logs survive even if the task/subtask row is deleted.
-
-        // ── Schedule ─────────────────────────────────────────────────────────
+        // ── Schedule ──────────────────────────────────────────────────────────
         modelBuilder.Entity<Schedule>()
             .HasOne(s => s.Organizer)
             .WithMany(u => u.OrganizedSchedules)
@@ -105,7 +99,7 @@ public class AppDbContext : DbContext
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // ── ScheduleParticipant composite PK ─────────────────────────────────
+        // ── ScheduleParticipant composite PK ──────────────────────────────────
         modelBuilder.Entity<ScheduleParticipant>()
             .HasKey(sp => new { sp.ScheduleId, sp.UserId });
 
@@ -119,6 +113,23 @@ public class AppDbContext : DbContext
             .HasOne(sp => sp.User)
             .WithMany(u => u.ScheduleParticipants)
             .HasForeignKey(sp => sp.UserId)
-            .OnDelete(DeleteBehavior.Restrict);        // avoid multi-cascade on Users
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ── UserPermission ────────────────────────────────────────────────────
+        modelBuilder.Entity<UserPermission>()
+            .HasOne(p => p.User)
+            .WithMany(u => u.Permissions)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserPermission>()
+            .HasOne(p => p.GrantedBy)
+            .WithMany(u => u.PermissionsGranted)
+            .HasForeignKey(p => p.GrantedById)
+            .OnDelete(DeleteBehavior.Restrict);        // avoid cascade conflict with UserId FK
+
+        modelBuilder.Entity<UserPermission>()
+            .HasIndex(p => new { p.UserId, p.Permission })
+            .IsUnique();                               // no duplicate grants
     }
 }

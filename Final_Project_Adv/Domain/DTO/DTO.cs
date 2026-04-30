@@ -1,4 +1,5 @@
-﻿using TaskStatusEnum = Final_Project_Adv.Domain.Enums.TaskStatus;
+﻿using Final_Project_Adv.Domain.Enums;
+using TaskStatusEnum = Final_Project_Adv.Domain.Enums.TaskStatus;
 
 namespace Final_Project_Adv.Domain.DTO;
 
@@ -178,3 +179,23 @@ public record TaskWithSubtasksDto(
     DateTime UpdatedAt,
     List<SubtaskDto> Subtasks
 );
+
+public class UserPermissionDto
+{
+    public int UserId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public List<string> Permissions { get; set; } = new();
+}
+
+public class GrantPermissionDto
+{
+    public int UserId { get; set; }        // who receives the permission
+    public int GrantedById { get; set; }   // admin doing the granting
+    public PermissionType Permission { get; set; }
+}
+
+public class RevokePermissionDto
+{
+    public int UserId { get; set; }
+    public PermissionType Permission { get; set; }
+}
