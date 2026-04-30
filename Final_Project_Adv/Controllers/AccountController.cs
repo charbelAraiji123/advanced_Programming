@@ -1,6 +1,8 @@
 ﻿using Final_Project_Adv.Models;
 using Final_Project_Adv.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Final_Project_Adv.Controllers
 {
@@ -32,6 +34,7 @@ namespace Final_Project_Adv.Controllers
                 return View(model);
             }
 
+
             // Session Storage
             HttpContext.Session.SetString("UserRole", user.Role);
             HttpContext.Session.SetString("UserName", user.Username);
@@ -52,6 +55,30 @@ namespace Final_Project_Adv.Controllers
             }
 
             return RedirectToAction("Index", "Home");
+
+            // ✅ CREATE CLAIMS (THIS IS THE CONNECTION POINT)
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Role, user.Role) // 🔥 CRITICAL
+    };
+
+            var identity = new ClaimsIdentity(claims, "CookieAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync("CookieAuth", principal);
+
+            // ✅ ROLE-BASED REDIRECT
+            if (user.Role == "Admin")
+                return RedirectToAction("Index", "Admin");
+
+            if (user.Role == "Manager")
+                return RedirectToAction("Dashboard", "Manager");
+
+            return RedirectToAction("Index", "Employee");
+
         }
 
         public IActionResult Logout()

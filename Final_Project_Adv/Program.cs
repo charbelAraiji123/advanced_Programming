@@ -1,5 +1,6 @@
 ﻿using Final_Project_Adv.Infrastructure.Data;
 using Final_Project_Adv.Services;
+using Final_Project_Adv.Services.Final_Project_Adv.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,8 +27,6 @@ builder.Services.AddAuthentication("CookieAuth")
     .AddCookie("CookieAuth", options =>
     {
         options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     });
 
 builder.Services.AddSession(options =>

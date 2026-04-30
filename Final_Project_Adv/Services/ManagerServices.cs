@@ -4,9 +4,7 @@ using Final_Project_Adv.Infrastructure.Data;
 using Final_Project_Adv.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+
 
 namespace Final_Project_Adv.Services
 {
@@ -159,10 +157,24 @@ namespace Final_Project_Adv.Services
             );
         }
 
-        public async Task<bool> DeleteSubTaskAsync(int id)
+        public async Task<bool> DeleteSubTaskAsync(int id, int requestingUserId)
         {
+            // Permission check
+            await permissionService.RequirePermissionAsync(requestingUserId, PermissionType.DeleteSubtask);
+
+            // Audit Log before deletion
+            await auditService.LogAsync(
+                "Deleted",
+                "Subtask",
+                id,
+                null,
+                null,
+                requestingUserId
+            );
+
             var deleted = await context.Subtask
-                .Where(item => item.Id == id).ExecuteDeleteAsync();
+                .Where(item => item.Id == id)
+                .ExecuteDeleteAsync();
 
             return deleted > 0;
         }
@@ -504,6 +516,28 @@ namespace Final_Project_Adv.Services
         public Task<bool> DeleteTaskAsync(int id)
         {
             throw new NotImplementedException();
+        }
+        public async Task<IEnumerable<TaskDashboardItemDto>> GetDashboardTasksAsync()
+        {
+            return await context.TaskItem
+                .Include(t => t.Department)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(a => a.User)
+                .Select(t => new TaskDashboardItemDto(
+                    t.Id,
+                    t.Title,
+                    t.Description,
+                    t.Status,
+                    t.CreatedById,
+                    t.DepartmentId,
+                    t.Department.Name,
+                    t.TaskAssignments.FirstOrDefault() != null
+                        ? t.TaskAssignments.FirstOrDefault()!.User.Username
+                        : null,
+                    t.CreatedAt,
+                    t.UpdatedAt
+                ))
+                .ToListAsync();
         }
     }
 }

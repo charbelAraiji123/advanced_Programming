@@ -180,6 +180,7 @@ public record TaskWithSubtasksDto(
     List<SubtaskDto> Subtasks
 );
 
+
 public class UserPermissionDto
 {
     public int UserId { get; set; }
@@ -199,3 +200,17 @@ public class RevokePermissionDto
     public int UserId { get; set; }
     public PermissionType Permission { get; set; }
 }
+
+public record TaskDashboardItemDto(
+    int Id,
+    string Title,
+    string Description,
+    TaskStatusEnum Status,
+    int CreatedById,
+    int DepartmentId,
+    string DepartmentName,
+    string? AssignedUsername,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+);
+
