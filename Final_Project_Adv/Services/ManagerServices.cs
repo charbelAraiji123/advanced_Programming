@@ -34,17 +34,32 @@ namespace Final_Project_Adv.Services
 
         public async Task<UsersDto> CreateUserAsync(CreateUserDto dto)
         {
+            // 1. Validate Department
+            if (!dto.DepartmentId.HasValue)
+                throw new Exception("Please select a department.");
+
+            var departmentExists = await context.Department.AnyAsync(d => d.Id == dto.DepartmentId.Value);
+            if (!departmentExists)
+                throw new Exception($"Department ID {dto.DepartmentId} does not exist.");
+
+            // 2. Validate Username Uniqueness
+            var userExists = await context.Users.AnyAsync(u => u.Username == dto.Username);
+            if (userExists)
+                throw new Exception("Username is already taken.");
+
+            // 3. Map DTO to Entity
             var user = new Users
             {
                 Username = dto.Username,
-                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password), // 🔥 hashed
+                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Email = dto.Email,
                 Role = dto.Role,
-                DepartmentId = dto.DepartmentId,
+                DepartmentId = (int)dto.DepartmentId,  // explicit cast — safe because we checked HasValue above
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
+            // 4. Persistence
             context.Users.Add(user);
             await context.SaveChangesAsync();
 

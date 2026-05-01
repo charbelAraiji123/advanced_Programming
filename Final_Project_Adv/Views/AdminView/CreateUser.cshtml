@@ -1,0 +1,62 @@
+﻿@using Final_Project_Adv.Models
+@model Final_Project_Adv.Domain.DTO.CreateUserDto
+
+<div class="container mt-4" style="max-width: 500px;">
+    <h2>Create New User</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form action="/Admin/CreateUser" method="post">
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="Username" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="Email" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="Password" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select name="DepartmentId" class="form-select">
+                <option value="">-- Select Department --</option>
+                @foreach (Microsoft.AspNetCore.Mvc.Rendering.SelectListItem item in ViewBag.Departments)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select name="Role" class="form-select">
+                <option value="">-- Select Role --</option>
+                <option value="Employee">Employee</option>
+                <option value="Manager">Manager</option>
+                <option value="Admin">Admin</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create User</button>
+        <a asp-action="UserManagement" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

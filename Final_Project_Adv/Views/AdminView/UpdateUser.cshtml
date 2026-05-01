@@ -1,0 +1,165 @@
+﻿@{
+    ViewData["Title"] = "Update User";
+    var departments = ViewBag.Departments as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+                      ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+
+    var hasErrors = !ViewData.ModelState.IsValid && (bool)(ViewBag.HasFormErrors ?? false);
+    var postedId = (string)(ViewBag.PostedId ?? "");
+    var postedUser = (string)(ViewBag.PostedUser ?? "");
+    var postedEmail = (string)(ViewBag.PostedEmail ?? "");
+    var postedRole = (string)(ViewBag.PostedRole ?? "");
+    var postedDept = (string)(ViewBag.PostedDept ?? "");
+}
+
+<div class="container mt-4" style="max-width: 500px;">
+    <h2>Update User</h2>
+
+    @if (hasErrors)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@err.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">User ID</label>
+        <div class="input-group">
+            <input type="number" id="searchId" class="form-control" placeholder="Enter User ID" min="1" />
+            <button class="btn btn-outline-secondary" onclick="searchUser()" id="btnSearch">Search</button>
+        </div>
+        <small id="searchFeedback" class="form-text"></small>
+    </div>
+
+    <hr />
+
+    <form method="post" action="/Admin/UpdateUser" id="editForm" style="display:none;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" id="hiddenId" />
+
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="Username" id="fUsername" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="Email" id="fEmail" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select name="DepartmentId" id="fDept" class="form-select">
+                <option value="">-- Select Department --</option>
+                @foreach (var dept in departments)
+                {
+                    <option value="@dept.Value">@dept.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select name="Role" id="fRole" class="form-select">
+                <option value="">-- Select Role --</option>
+                <option value="Employee">Employee</option>
+                <option value="Manager">Manager</option>
+                <option value="Admin">Admin</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-warning">Save Changes</button>
+        <a asp-action="UserManagement" asp-controller="AdminView" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>
+
+<span id="srv-errors" style="display:none">@(hasErrors ? "1" : "0")</span>
+<span id="srv-id" style="display:none">@postedId</span>
+<span id="srv-user" style="display:none">@postedUser</span>
+<span id="srv-email" style="display:none">@postedEmail</span>
+<span id="srv-role" style="display:none">@postedRole</span>
+<span id="srv-dept" style="display:none">@postedDept</span>
+
+<script>
+    async function searchUser() {
+        var id = document.getElementById('searchId').value.trim();
+        var feedback = document.getElementById('searchFeedback');
+        var editForm = document.getElementById('editForm');
+
+        if (!id || parseInt(id) <= 0) {
+            feedback.textContent = 'Please enter a valid User ID.';
+            feedback.className = 'form-text text-danger';
+            return;
+        }
+
+        document.getElementById('btnSearch').disabled = true;
+        feedback.textContent = 'Searching...';
+        feedback.className = 'form-text text-muted';
+        editForm.style.display = 'none';
+
+        try {
+            var resp = await fetch('/Admin/GetUser?id=' + id, { headers: { 'Accept': 'application/json' } });
+
+            if (resp.ok) {
+                var user = await resp.json();
+                populateForm(user.id, user.username, user.email, user.role, user.departmentId);
+                feedback.textContent = 'User "' + user.username + '" found.';
+                feedback.className = 'form-text text-success';
+                editForm.style.display = 'block';
+            } else {
+                var data = await resp.json().catch(function () { return {}; });
+                feedback.textContent = data.message || 'No user found with ID ' + id + '.';
+                feedback.className = 'form-text text-danger';
+            }
+        } catch (e) {
+            feedback.textContent = 'Network error. Please try again.';
+            feedback.className = 'form-text text-danger';
+        } finally {
+            document.getElementById('btnSearch').disabled = false;
+        }
+    }
+
+    function populateForm(id, username, email, role, deptId) {
+        document.getElementById('hiddenId').value  = id;
+        document.getElementById('fUsername').value = username;
+        document.getElementById('fEmail').value    = email;
+
+        var roleEl = document.getElementById('fRole');
+        for (var i = 0; i < roleEl.options.length; i++) {
+            if (roleEl.options[i].value === role) { roleEl.selectedIndex = i; break; }
+        }
+
+        var deptEl = document.getElementById('fDept');
+        for (var i = 0; i < deptEl.options.length; i++) {
+            if (parseInt(deptEl.options[i].value) === parseInt(deptId)) { deptEl.selectedIndex = i; break; }
+        }
+    }
+
+    document.getElementById('searchId').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); searchUser(); }
+    });
+
+    (function () {
+        if (document.getElementById('srv-errors').textContent.trim() !== '1') return;
+
+        var id    = document.getElementById('srv-id').textContent.trim();
+        var user  = document.getElementById('srv-user').textContent.trim();
+        var email = document.getElementById('srv-email').textContent.trim();
+        var role  = document.getElementById('srv-role').textContent.trim();
+        var dept  = document.getElementById('srv-dept').textContent.trim();
+
+        if (!id) return;
+
+        populateForm(id, user, email, role, dept);
+        document.getElementById('editForm').style.display = 'block';
+    })();
+</script>

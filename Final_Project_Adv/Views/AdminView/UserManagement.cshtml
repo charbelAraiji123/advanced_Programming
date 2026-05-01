@@ -1,0 +1,57 @@
+﻿@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="AdminView" asp-action="AdminPanel">Admin Control</a></li>
+            <li class="breadcrumb-item active">User Management</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-secondary-subtle" style="border-radius: 15px;">
+        <div class="card-body p-4">
+            <h2 class="fw-bold">User Management</h2>
+
+            <!-- Matches [HttpGet("CreateUser")] -->
+            <form action="/Admin/CreateUser" method="get" class="mb-2">
+                <button type="submit" class="btn btn-outline-primary">
+                    Create Users
+                </button>
+            </form>
+
+            <!-- Matches [HttpGet("UpdateUser")] -->
+            <form action="/Admin/UpdateUser" method="get" class="mb-2">
+                <button type="submit" class="btn btn-outline-primary">
+                    Update Users
+                </button>
+            </form>
+
+            <!-- Matches [HttpGet("DeleteManagement")] -->
+            <form action="/Admin/DeleteManagement" method="get" class="mb-2">
+                <button type="submit" class="btn btn-outline-primary">
+                    Delete Users
+                </button>
+            </form>
+
+            <hr />
+            
+            <!-- Table or Form for User Management goes here -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTable">
+                        <!-- Populated by JavaScript calling api/Admin/Users -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

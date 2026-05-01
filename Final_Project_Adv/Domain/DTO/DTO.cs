@@ -1,4 +1,5 @@
 ﻿using Final_Project_Adv.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 using TaskStatusEnum = Final_Project_Adv.Domain.Enums.TaskStatus;
 
 namespace Final_Project_Adv.Domain.DTO;
@@ -9,18 +10,30 @@ public record UsersDto
     public string Username { get; set; }
     public string Email { get; set; }
     public string Role { get; set; }
-
     public int DepartmentId { get; set; }
 }
-public record CreateUserDto
+
+public class CreateUserDto  // ← changed from 'record' to 'class'
 {
+    [Required(ErrorMessage = "Username is required")]
+    [MinLength(3, ErrorMessage = "Username must be at least 3 characters")]
     public string Username { get; set; }
+
+    [Required(ErrorMessage = "Password is required")]
+    [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
     public string Password { get; set; }
+
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
     public string Email { get; set; }
+
+    [Required(ErrorMessage = "Please select a role")]
     public string Role { get; set; }
 
-    public int DepartmentId { get; set; } // important
+    [Required(ErrorMessage = "Please select a department")]
+    public int? DepartmentId { get; set; }
 }
+
 public record UpdateUserDto(
     string Username,
     string Password,
@@ -33,16 +46,16 @@ public record DepartmentDto
 {
     public int Id { get; set; }
     public string Name { get; set; }
-
     public List<UsersDto> Users { get; set; } = new();
-
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
+
 public record CreateDepartmentDto
 {
     public string Name { get; set; }
 }
+
 public record TaskItemDto(
     int Id,
     string Title,
@@ -53,6 +66,7 @@ public record TaskItemDto(
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
+
 public class CreateTaskItemDto
 {
     public string Title { get; set; } = string.Empty;
@@ -80,36 +94,35 @@ public record SubtaskDto(
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
+
 public record CreateSubtaskDto(
     string Title,
     string Description,
     int TaskItemId,
     int CreatedById,
-    int? AssignedToId  // optional, can be assigned later
+    int? AssignedToId
 );
-public record UpdateTaskDTO(
 
+public record UpdateTaskDTO(
     string Title,
     string Description,
     string Status,
     int DepartmentId,
     DateTime UpdatedAt
+);
 
-    );
 public record UpdateSubTaskDTO(
-
     string Title,
     string Description,
     string Status,
     int AssignedId,
     DateTime UpdatedAt
+);
 
-    );
 public class UserTaskStatusDto
 {
     public int UserId { get; set; }
     public string Username { get; set; } = string.Empty;
-
     public List<TaskStatusDto> Tasks { get; set; } = new();
 }
 
@@ -118,7 +131,6 @@ public class TaskStatusDto
     public int TaskId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
-
     public List<SubtaskStatusDto> Subtasks { get; set; } = new();
 }
 
@@ -128,46 +140,43 @@ public class SubtaskStatusDto
     public string Title { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
 }
+
 public class TaskCommentDto
 {
     public int Id { get; set; }
     public string Content { get; set; } = string.Empty;
-
     public int AuthorId { get; set; }
     public string AuthorName { get; set; } = string.Empty;
-
     public int TaskItemId { get; set; }
-
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
+
 public class CreateTaskCommentDto
 {
     public string Content { get; set; } = string.Empty;
-
     public int AuthorId { get; set; }
     public int TaskItemId { get; set; }
 }
+
 public class SubtaskCommentDto
 {
     public int Id { get; set; }
     public string Content { get; set; } = string.Empty;
-
     public int AuthorId { get; set; }
     public string AuthorName { get; set; } = string.Empty;
-
     public int SubtaskId { get; set; }
-
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
+
 public class CreateSubtaskCommentDto
 {
     public string Content { get; set; } = string.Empty;
-
     public int AuthorId { get; set; }
     public int SubtaskId { get; set; }
 }
+
 public record TaskWithSubtasksDto(
     int Id,
     string Title,
@@ -180,7 +189,6 @@ public record TaskWithSubtasksDto(
     List<SubtaskDto> Subtasks
 );
 
-
 public class UserPermissionDto
 {
     public int UserId { get; set; }
@@ -190,8 +198,8 @@ public class UserPermissionDto
 
 public class GrantPermissionDto
 {
-    public int UserId { get; set; }        // who receives the permission
-    public int GrantedById { get; set; }   // admin doing the granting
+    public int UserId { get; set; }
+    public int GrantedById { get; set; }
     public PermissionType Permission { get; set; }
 }
 
@@ -213,4 +221,3 @@ public record TaskDashboardItemDto(
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
-

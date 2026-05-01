@@ -9,17 +9,17 @@ namespace Final_Project_Adv.Controllers
     public class AdminController(IAdminServices adminServices) : Controller
     {
         [HttpGet("Panel")]
-        public IActionResult AdminPanel()
-        {
-            var role = HttpContext.Session.GetString("UserRole");
+        //public IActionResult AdminPanel()
+        //{
+        //    var role = HttpContext.Session.GetString("UserRole");
 
-            if (!string.Equals(role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
-            {
-                return RedirectToAction("Login", "Account");
-            }
+        //    if (!string.Equals(role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        //    {
+        //        return RedirectToAction("Login", "Account");
+        //    }
 
-            return View();
-        }
+        //    return View();
+        //}
         // --- User Management ---
 
         [HttpPost("Users/Create")]

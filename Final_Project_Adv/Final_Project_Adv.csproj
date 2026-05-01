@@ -27,4 +27,8 @@
     <Folder Include="Domain\Entities\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Views\AdminView\AdminPanel.cshtml" />
+  </ItemGroup>
+
 </Project>

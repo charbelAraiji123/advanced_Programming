@@ -7,23 +7,35 @@ namespace Final_Project_Adv.Services
 {
     public class AdminServices(AppDbContext context, PermissionService permissionService) : IAdminServices
     {
+        // ─────────────────────────────────────────────────────────────────────
+        // USER CRUD
+        // ─────────────────────────────────────────────────────────────────────
+
         public async Task<UsersDto> CreateUserAsync(CreateUserDto dto)
         {
-            var departmentExists = await context.Department.AnyAsync(d => d.Id == dto.DepartmentId);
+            // 1. Validate Department
+            var departmentExists = await context.Department.AnyAsync(d => d.Id == dto.DepartmentId.Value);
             if (!departmentExists)
-                throw new Exception("Department not found");
+                throw new Exception($"Department ID {dto.DepartmentId} does not exist.");
 
+            // 2. Validate Username Uniqueness
+            var userExists = await context.Users.AnyAsync(u => u.Username == dto.Username);
+            if (userExists)
+                throw new Exception("Username is already taken.");
+
+            // 3. Map DTO to Entity
             var user = new Users
             {
                 Username = dto.Username,
-                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password), // Added Hashing
+                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Email = dto.Email,
                 Role = dto.Role,
-                DepartmentId = dto.DepartmentId,
+                DepartmentId = dto.DepartmentId.Value,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
+            // 4. Persistence
             context.Users.Add(user);
             await context.SaveChangesAsync();
 
@@ -46,11 +58,30 @@ namespace Final_Project_Adv.Services
             await context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Updates an existing user's profile fields.
+        /// Validates: user existence, username uniqueness (excluding self),
+        /// department existence.
+        /// </summary>
         public async Task UpdateUserAsync(UsersDto usersDto)
         {
+            // 1. User must exist
             var user = await context.Users.FindAsync(usersDto.Id);
-            if (user == null) return;
+            if (user == null)
+                throw new Exception($"User with ID {usersDto.Id} does not exist.");
 
+            // 2. Username uniqueness – exclude the current user
+            var usernameTaken = await context.Users
+                .AnyAsync(u => u.Username == usersDto.Username && u.Id != usersDto.Id);
+            if (usernameTaken)
+                throw new Exception($"Username '{usersDto.Username}' is already taken by another user.");
+
+            // 3. Department must exist
+            var deptExists = await context.Department.AnyAsync(d => d.Id == usersDto.DepartmentId);
+            if (!deptExists)
+                throw new Exception($"Department with ID {usersDto.DepartmentId} does not exist.");
+
+            // 4. Apply changes
             user.Username = usersDto.Username;
             user.Email = usersDto.Email;
             user.Role = usersDto.Role;
@@ -60,7 +91,10 @@ namespace Final_Project_Adv.Services
             await context.SaveChangesAsync();
         }
 
-        // --- Permission Logic ---
+        // ─────────────────────────────────────────────────────────────────────
+        // PERMISSION LOGIC
+        // ─────────────────────────────────────────────────────────────────────
+
         public async Task<UserPermissionDto> GrantPermissionToUserAsync(GrantPermissionDto dto)
             => await permissionService.GrantPermissionAsync(dto);
 
@@ -70,13 +104,28 @@ namespace Final_Project_Adv.Services
         public async Task<UserPermissionDto> GetUserPermissionsAsync(int userId)
             => await permissionService.GetUserPermissionsAsync(userId);
 
-        // --- Department Logic ---
+        // ─────────────────────────────────────────────────────────────────────
+        // DEPARTMENT LOGIC
+        // ─────────────────────────────────────────────────────────────────────
+
         public async Task<DepartmentDto> CreateDeptAsync(CreateDepartmentDto dto)
         {
-            var dept = new Department { Name = dto.Name, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+            var dept = new Department
+            {
+                Name = dto.Name,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
             context.Department.Add(dept);
             await context.SaveChangesAsync();
-            return new DepartmentDto { Id = dept.Id, Name = dept.Name, CreatedAt = dept.CreatedAt, UpdatedAt = dept.UpdatedAt };
+
+            return new DepartmentDto
+            {
+                Id = dept.Id,
+                Name = dept.Name,
+                CreatedAt = dept.CreatedAt,
+                UpdatedAt = dept.UpdatedAt
+            };
         }
 
         public async Task DeleteDeptAsync(int id)
@@ -93,6 +142,7 @@ namespace Final_Project_Adv.Services
         {
             var dept = await context.Department.FindAsync(deptDto.Id);
             if (dept == null) return;
+
             dept.Name = deptDto.Name;
             dept.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();

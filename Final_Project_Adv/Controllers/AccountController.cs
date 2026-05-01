@@ -34,51 +34,17 @@ namespace Final_Project_Adv.Controllers
                 return View(model);
             }
 
-
-            // Session Storage
+            // Set Session
             HttpContext.Session.SetString("UserRole", user.Role);
             HttpContext.Session.SetString("UserName", user.Username);
 
-            var token = _jwtService.GenerateToken(user);
-            Response.Cookies.Append("AuthToken", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(60)
-            });
-
-            // Role-Based Redirection
+            // Redirect based on role
             if (string.Equals(user.Role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
             {
-                return RedirectToAction("AdminPanel", "Admin");
+                return RedirectToAction("AdminPanel", "AdminView"); // Points to AdminViewController
             }
 
             return RedirectToAction("Index", "Home");
-
-            // ✅ CREATE CLAIMS (THIS IS THE CONNECTION POINT)
-            var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, user.Username),
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.Role) // 🔥 CRITICAL
-    };
-
-            var identity = new ClaimsIdentity(claims, "CookieAuth");
-            var principal = new ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync("CookieAuth", principal);
-
-            // ✅ ROLE-BASED REDIRECT
-            if (user.Role == "Admin")
-                return RedirectToAction("Index", "Admin");
-
-            if (user.Role == "Manager")
-                return RedirectToAction("Dashboard", "Manager");
-
-            return RedirectToAction("Index", "Employee");
-
         }
 
         public IActionResult Logout()
