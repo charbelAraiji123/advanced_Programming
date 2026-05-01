@@ -6,15 +6,14 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var tasks = Model?.Tasks ?? new List<TaskDashboardItemDto>();
-
     var total = tasks.Count;
     var inProgress = tasks.Count(t => t.Status.ToString() == "InProgress");
     var completed = tasks.Count(t => t.Status.ToString() == "Completed");
     var pending = tasks.Count(t => t.Status.ToString() == "Pending");
 }
+
 @section Styles {
     <style>
-        /* SHELL */
         .db-shell {
             display: flex;
             flex-direction: column;
@@ -23,7 +22,7 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* TOPBAR */
+        /* ── Topbar ── */
         .db-topbar {
             display: flex;
             align-items: center;
@@ -55,21 +54,35 @@
             color: #fff;
         }
 
+        /* ── Nav ── */
         .db-nav {
             display: flex;
             gap: 24px;
+            align-items: center;
         }
 
         .db-nav-link {
             color: #aaa;
             text-decoration: none;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            border-bottom: 2px solid transparent;
+            transition: color .2s, border-color .2s;
         }
 
-            .db-nav-link.active, .db-nav-link:hover {
+            .db-nav-link.active,
+            .db-nav-link:hover {
                 color: #fff;
             }
 
+            .db-nav-link.active {
+                border-bottom-color: #6c63ff;
+            }
+
+        /* ── Buttons ── */
         .db-btn-primary {
             background: #6c63ff;
             color: #fff;
@@ -78,19 +91,77 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background .2s;
         }
 
             .db-btn-primary:hover {
                 background: #574fd6;
+                color: #fff;
             }
 
-        /* MAIN */
+        .db-btn-secondary {
+            background: #fff;
+            color: #1e1e2d;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .2s;
+        }
+
+            .db-btn-secondary:hover {
+                background: #f1f5f9;
+                color: #1e1e2d;
+            }
+
+        .db-btn-ghost {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #3a3a4e;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .2s;
+        }
+
+            .db-btn-ghost:hover {
+                background: #2a2a3d;
+                color: #fff;
+                border-color: #6c63ff;
+            }
+
+        .db-topbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* ── Main ── */
         .db-main {
             padding: 32px;
         }
 
         .db-page-head {
             margin-bottom: 24px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .db-page-title {
@@ -106,7 +177,7 @@
             margin: 4px 0 0;
         }
 
-        /* STATS */
+        /* ── Stat cards ── */
         .db-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -118,8 +189,25 @@
             background: #fff;
             border-radius: 10px;
             padding: 20px 24px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+            border-left: 4px solid transparent;
         }
+
+            .db-stat-card.total {
+                border-left-color: #6c63ff;
+            }
+
+            .db-stat-card.inprogress {
+                border-left-color: #3b82f6;
+            }
+
+            .db-stat-card.completed {
+                border-left-color: #10b981;
+            }
+
+            .db-stat-card.pending {
+                border-left-color: #f59e0b;
+            }
 
         .db-stat-value {
             font-size: 32px;
@@ -133,11 +221,11 @@
             margin-top: 4px;
         }
 
-        /* TABLE */
+        /* ── Table ── */
         .db-table-wrap {
             background: #fff;
             border-radius: 10px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
             padding: 24px;
         }
 
@@ -146,6 +234,8 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .db-section-title {
@@ -162,6 +252,21 @@
             padding: 3px 10px;
             border-radius: 20px;
         }
+
+        /* Search input */
+        .db-search {
+            padding: 7px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            width: 220px;
+            transition: border-color .2s;
+        }
+
+            .db-search:focus {
+                border-color: #6c63ff;
+            }
 
         .db-table-scroll {
             overflow-x: auto;
@@ -183,6 +288,7 @@
                 font-weight: 600;
                 color: #555;
                 border-bottom: 1px solid #eee;
+                white-space: nowrap;
             }
 
             .db-table td {
@@ -195,14 +301,61 @@
                 background: #fafafa;
             }
 
-        /* BADGE */
+        /* Badges */
         .db-badge {
             padding: 3px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 500;
-            background: #e8e8ff;
-            color: #6c63ff;
+        }
+
+        .badge-pending {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .badge-inprogress {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-completed {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        /* Banners */
+        .success-banner {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-banner {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Empty row */
+        .db-empty {
+            text-align: center;
+            color: #aaa;
+            padding: 32px 0;
+            font-size: 14px;
         }
     </style>
 }
@@ -217,20 +370,22 @@
         </div>
 
         <nav class="db-nav">
-            <a href="#" class="db-nav-link active">Dashboard</a>
-            <a href="#" class="db-nav-link">Tasks</a>
-            <a href="#" class="db-nav-link">Team</a>
+            <a href="/Manager/Dashboard" class="db-nav-link active">
+                &#9632; Dashboard
+            </a>
+            <a href="/Manager/Progress" class="db-nav-link">
+                &#9650; Team Progress
+            </a>
         </nav>
 
         <div class="db-topbar-right">
-            <button class="db-btn db-btn-primary">+ New Task</button>
+            <a href="/Manager/UpdateTask" class="db-btn-ghost">&#9998; Update Task</a>
+            <a href="/Manager/CreateTask" class="db-btn-primary">&#43; New Task</a>
         </div>
     </header>
 
-    <!-- MAIN -->
     <main class="db-main">
 
-        <!-- HEADER -->
         <div class="db-page-head">
             <div>
                 <h1 class="db-page-title">Dashboard</h1>
@@ -238,96 +393,111 @@
             </div>
         </div>
 
-        <!-- STATS -->
-        <section class="db-stats">
+        @if (TempData["Success"] != null)
+        {
+            <div class="success-banner">&#10003; @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="error-banner">&#9888; @TempData["Error"]</div>
+        }
 
-            <div class="db-stat-card">
+        <!-- Stat cards -->
+        <section class="db-stats">
+            <div class="db-stat-card total">
                 <div class="db-stat-value">@total</div>
                 <div class="db-stat-label">Total Tasks</div>
             </div>
-
-            <div class="db-stat-card">
+            <div class="db-stat-card inprogress">
                 <div class="db-stat-value">@inProgress</div>
                 <div class="db-stat-label">In Progress</div>
             </div>
-
-            <div class="db-stat-card">
+            <div class="db-stat-card completed">
                 <div class="db-stat-value">@completed</div>
                 <div class="db-stat-label">Completed</div>
             </div>
-
-            <div class="db-stat-card">
+            <div class="db-stat-card pending">
                 <div class="db-stat-value">@pending</div>
                 <div class="db-stat-label">Pending</div>
             </div>
-
         </section>
 
-        <!-- TABLE -->
+        <!-- Task table -->
         <section class="db-table-wrap">
-
             <div class="db-table-header">
-                <h2 class="db-section-title">All Tasks</h2>
-                <span class="db-task-count">@total tasks</span>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <h2 class="db-section-title">All Tasks</h2>
+                    <span class="db-task-count">@total tasks</span>
+                </div>
+                <input class="db-search" id="taskSearch"
+                       placeholder="Search title or user…"
+                       oninput="filterTable()" />
             </div>
 
             <div class="db-table-scroll">
-                <table class="db-table">
-
+                <table class="db-table" id="taskTable">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Title</th>
-                            <th>Assigned User</th>
+                            <th>Assigned To</th>
                             <th>Status</th>
                             <th>Department</th>
                             <th>Created</th>
                             <th>Updated</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
-
                     <tbody>
-                        @foreach (var t in tasks)
+                        @if (!tasks.Any())
                         {
                             <tr>
-                                <td>@t.Id</td>
-
-                                <td>@t.Title</td>
-
+                                <td colspan="7" class="db-empty">No tasks found.</td>
+                            </tr>
+                        }
+                        @foreach (var t in tasks)
+                        {
+                            var badgeClass = t.Status.ToString() switch
+                            {
+                                "InProgress" => "badge-inprogress",
+                                "Completed" => "badge-completed",
+                                _ => "badge-pending"
+                            };
+                            <tr>
+                                <td style="color:#888;font-size:13px;">#@t.Id</td>
+                                <td style="font-weight:500;">@t.Title</td>
                                 <td>
                                     @if (t.AssignedUsername != null)
                                     {
-                                        @t.AssignedUsername
+                                        <span>@t.AssignedUsername</span>
                                     }
                                     else
                                     {
-                                        <span style="color: gray;">Unassigned</span>
+                                        <span style="color:#aaa;font-style:italic;">Unassigned</span>
                                     }
                                 </td>
-
-                                <td>
-                                    <span class="db-badge">@t.Status</span>
-                                </td>
-
+                                <td><span class="db-badge @badgeClass">@t.Status</span></td>
                                 <td>@t.DepartmentName</td>
-
                                 <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
-
                                 <td>@t.UpdatedAt.ToString("yyyy-MM-dd")</td>
-
-                                <td>
-                                    <a asp-action="Details" asp-route-id="@t.Id">View</a> |
-                                    <a asp-action="Edit" asp-route-id="@t.Id">Edit</a>
-                                </td>
                             </tr>
                         }
                     </tbody>
-
                 </table>
             </div>
-
         </section>
 
     </main>
 </div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            var q    = document.getElementById('taskSearch').value.toLowerCase();
+            var rows = document.querySelectorAll('#taskTable tbody tr');
+            rows.forEach(function (row) {
+                var text = row.textContent.toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+}

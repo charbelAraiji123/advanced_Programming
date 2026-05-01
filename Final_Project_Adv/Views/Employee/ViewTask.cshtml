@@ -1,0 +1,207 @@
+﻿@using Final_Project_Adv.Domain.DTO
+@model IEnumerable<TaskItemDto>
+
+@{
+    ViewData["Title"] = "My Tasks";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var tasks = Model ?? Enumerable.Empty<TaskItemDto>();
+}
+
+@section Styles {
+    <style>
+        /* SHELL & BACKGROUND */
+        .task-shell {
+            background: #f4f6f9;
+            min-height: 100vh;
+            padding-bottom: 50px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* HEADER SECTION */
+        .task-page-header {
+            background: white;
+            padding: 2rem 0;
+            border-bottom: 1px solid #e3e6f0;
+            margin-bottom: 2rem;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e1e2d;
+            margin: 0;
+        }
+
+        .page-subtitle {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* TABLE CARD */
+        .task-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background-color: #f8f9fc;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: #4e73df;
+            border-top: none;
+            padding: 1rem;
+        }
+
+        .table td {
+            vertical-align: middle;
+            padding: 1rem;
+            color: #4e4e4e;
+        }
+
+        /* STATUS BADGES */
+        .badge-status {
+            padding: 0.5em 0.8em;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .bg-pending { background-color: #fff4e5; color: #ff9800; }
+        .bg-progress { background-color: #e8f0fe; color: #1a73e8; }
+        .bg-complete { background-color: #e6f4ea; color: #1e8e3e; }
+
+        /* BUTTONS */
+        .btn-accept {
+            background-color: #6c63ff;
+            border: none;
+            color: white;
+            padding: 0.4rem 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-accept:hover {
+            background-color: #574fd6;
+            transform: translateY(-1px);
+        }
+    </style>
+}
+
+<div class="task-shell">
+    <!-- PAGE HEADER -->
+    <div class="task-page-header">
+        <div class="container header-container">
+            <div>
+                <h1 class="page-title">My Assignments</h1>
+                <p class="page-subtitle">Manage and track your personal task queue</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-dark">Total: @tasks.Count()</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- ALERTS -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- MAIN CONTENT -->
+        <div class="task-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Task Details</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!tasks.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                        No tasks assigned to you yet.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var task in tasks)
+                            {
+                                var statusStr = task.Status.ToString();
+                                var (badgeClass, label) = statusStr switch
+                                {
+                                    "InProgress" => ("bg-progress", "In Progress"),
+                                    "Completed" => ("bg-complete", "Completed"),
+                                    _ => ("bg-pending", "Pending")
+                                };
+
+                                <tr>
+                                    <td class="fw-bold text-muted">#@task.Id</td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@task.Title</div>
+                                        <small class="text-muted">@(string.IsNullOrWhiteSpace(task.Description) ? "No description provided." : task.Description)</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge-status @badgeClass">@label</span>
+                                    </td>
+                                    <td class="text-muted small">
+                                        @task.CreatedAt.ToString("MMM dd, yyyy")
+                                    </td>
+                                    <td class="text-center">
+                                        @if (statusStr == "Pending")
+                                        {
+                                            <form method="post" action="/Employee/AcceptTask">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="TaskId" value="@task.Id" />
+                                                <button type="submit" class="btn btn-sm btn-accept shadow-sm">
+                                                    Accept Task
+                                                </button>
+                                            </form>
+                                        }
+                                        else if (statusStr == "InProgress")
+                                        {
+                                            <span class="text-primary small fw-bold">
+                                                <i class="bi bi-play-circle-fill me-1"></i> Active
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success small fw-bold">
+                                                <i class="bi bi-check-all me-1"></i> Finalized
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

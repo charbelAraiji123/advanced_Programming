@@ -18,5 +18,10 @@ namespace Final_Project_Adv.Services
         Task<DepartmentDto> CreateDeptAsync(CreateDepartmentDto dto, int performedById);
         Task DeleteDeptAsync(int id, int performedById);
         Task UpdateDptAsync(DepartmentDto deptDto, int performedById);
+
+        Task<IEnumerable<TaskItemDto>> ViewAllTasksAsync();
+        Task<IEnumerable<TaskItemDto>> ViewAllTasksPerDeptAsync(int departmentId);
+
+
     }
 }

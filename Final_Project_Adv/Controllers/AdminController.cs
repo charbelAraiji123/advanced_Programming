@@ -100,5 +100,21 @@ namespace Final_Project_Adv.Controllers
             var result = await _adminServices.GetUserPermissionsAsync(userId);
             return Ok(result);
         }
+
+        [HttpGet("tasks")]
+        public async Task<ActionResult<IEnumerable<TaskItemDto>>> GetAllTasks()
+        {
+            var tasks = await _adminServices.ViewAllTasksAsync();
+            return Ok(tasks);
+        }
+
+        [HttpGet("tasks/department/{deptId}")]
+        public async Task<ActionResult<IEnumerable<TaskItemDto>>> GetTasksByDepartment(int deptId)
+        {
+            var tasks = await _adminServices.ViewAllTasksPerDeptAsync(deptId);
+            return Ok(tasks);
+        }
+
+
     }
 }

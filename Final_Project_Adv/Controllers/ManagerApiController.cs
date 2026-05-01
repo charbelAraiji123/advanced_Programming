@@ -1,11 +1,12 @@
 ﻿using Final_Project_Adv.Domain.DTO;
 using Final_Project_Adv.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Manager")]
+[Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},CookieAuth", Roles = "Manager")]
 public class ManagerApiController : ControllerBase
 {
     private readonly IManagerServices _managerServices;

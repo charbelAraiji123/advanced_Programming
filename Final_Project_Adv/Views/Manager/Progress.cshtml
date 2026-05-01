@@ -1,0 +1,985 @@
+﻿@using Final_Project_Adv.Domain.DTO
+@model List<UserProgressDto>
+@{
+    ViewData["Title"] = "Team Progress";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var users = Model ?? new List<UserProgressDto>();
+}
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --bg: #0f1117;
+        --surface: #181c27;
+        --surface2: #1e2333;
+        --border: #2a3050;
+        --text: #e8eaf2;
+        --muted: #6b7299;
+        --accent: #5b8dee;
+        --green: #34d399;
+        --amber: #fbbf24;
+        --red: #f87171;
+        --radius: 12px;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+    }
+
+    /* ── Topbar ── */
+    .pg-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        height: 58px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .pg-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .pg-logo {
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        font-size: 13px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        letter-spacing: .03em;
+    }
+
+    .pg-topbar-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .pg-back {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: color .2s;
+    }
+
+        .pg-back:hover {
+            color: var(--text);
+        }
+
+    /* ── Page shell ── */
+    .pg-shell {
+        padding: 36px 32px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .pg-header {
+        margin-bottom: 28px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+        .pg-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -.02em;
+        }
+
+        .pg-header p {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+    /* ── Summary strip ── */
+    .summary-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+
+    .summary-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+    }
+
+        .summary-card .s-val {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'DM Mono', monospace;
+            line-height: 1;
+        }
+
+        .summary-card .s-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+    .s-val.green {
+        color: var(--green);
+    }
+
+    .s-val.amber {
+        color: var(--amber);
+    }
+
+    .s-val.blue {
+        color: var(--accent);
+    }
+
+    .s-val.red {
+        color: var(--red);
+    }
+
+    /* ── Filters ── */
+    .pg-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        align-items: center;
+    }
+
+        .pg-filters input,
+        .pg-filters select {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 13px;
+            padding: 8px 14px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+            .pg-filters input:focus,
+            .pg-filters select:focus {
+                border-color: var(--accent);
+            }
+
+        .pg-filters input {
+            width: 220px;
+        }
+
+        .pg-filters select option {
+            background: var(--surface2);
+        }
+
+    /* ── User cards grid ── */
+    .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 16px;
+    }
+
+    .user-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: border-color .2s, transform .2s;
+        cursor: pointer;
+    }
+
+        .user-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+    .uc-head {
+        padding: 18px 20px 14px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .uc-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        flex-shrink: 0;
+        color: #fff;
+    }
+
+    .uc-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .uc-name {
+        font-weight: 600;
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .uc-meta {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+    .uc-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 20px;
+        flex-shrink: 0;
+    }
+
+    .badge-manager {
+        background: #3b2f0a;
+        color: var(--amber);
+    }
+
+    .badge-employee {
+        background: #0d2e1e;
+        color: var(--green);
+    }
+
+    /* ── Overall ring + percent ── */
+    .uc-overall {
+        padding: 0 20px 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .ring-wrap {
+        position: relative;
+        width: 56px;
+        height: 56px;
+        flex-shrink: 0;
+    }
+
+        .ring-wrap svg {
+            transform: rotate(-90deg);
+        }
+
+    .ring-bg {
+        fill: none;
+        stroke: var(--border);
+        stroke-width: 5;
+    }
+
+    .ring-fg {
+        fill: none;
+        stroke-width: 5;
+        stroke-linecap: round;
+        transition: stroke-dashoffset .6s ease;
+    }
+
+    .ring-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text);
+    }
+
+    .uc-breakdown {
+        flex: 1;
+    }
+
+    .uc-breakdown-title {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        margin-bottom: 8px;
+    }
+
+    /* ── Mini progress bars ── */
+    .mini-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 12px;
+    }
+
+    .mini-bar-label {
+        color: var(--muted);
+        width: 58px;
+        flex-shrink: 0;
+    }
+
+    .mini-bar-track {
+        flex: 1;
+        height: 5px;
+        background: var(--border);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .mini-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width .5s ease;
+    }
+
+    .mini-bar-pct {
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: var(--muted);
+        width: 34px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    /* ── Stat chips ── */
+    .uc-chips {
+        padding: 0 20px 18px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .chip {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .chip-pending {
+        background: #1e1e0a;
+        color: var(--amber);
+    }
+
+    .chip-inprogress {
+        background: #0d1a2e;
+        color: var(--accent);
+    }
+
+    .chip-done {
+        background: #0d2e1e;
+        color: var(--green);
+    }
+
+    .uc-footer {
+        border-top: 1px solid var(--border);
+        padding: 10px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .uc-footer-link {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 0;
+        color: var(--muted);
+    }
+
+        .empty-state i {
+            font-size: 36px;
+            margin-bottom: 12px;
+            opacity: .4;
+            display: block;
+        }
+
+    /* ── Modal ── */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.7);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+    .modal-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 620px;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: modalIn .2s ease;
+    }
+
+    @@keyframes modalIn {
+        from {
+            opacity: 0;
+            transform: translateY(16px) scale(.97);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .modal-head {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .modal-head h2 {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 18px;
+        cursor: pointer;
+        transition: color .2s;
+        line-height: 1;
+    }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
+
+    .modal-body {
+        overflow-y: auto;
+        padding: 20px 24px;
+        flex: 1;
+    }
+
+    /* Modal big stats */
+    .modal-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .modal-stat {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+        text-align: center;
+    }
+
+        .modal-stat .ms-val {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .modal-stat .ms-label {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+    /* Task accordion */
+    .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .task-item {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .task-item-head {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+        .task-item-head:hover {
+            background: rgba(255,255,255,.03);
+        }
+
+    .ti-status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dot-pending {
+        background: var(--amber);
+    }
+
+    .dot-inprogress {
+        background: var(--accent);
+    }
+
+    .dot-completed {
+        background: var(--green);
+    }
+
+    .ti-title {
+        flex: 1;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .ti-sub-count {
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .ti-chevron {
+        font-size: 11px;
+        color: var(--muted);
+        transition: transform .2s;
+    }
+
+    .task-item.open .ti-chevron {
+        transform: rotate(90deg);
+    }
+
+    .task-item-body {
+        display: none;
+        padding: 0 16px 12px;
+    }
+
+    .task-item.open .task-item-body {
+        display: block;
+    }
+
+    .subtask-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+        .subtask-row .ti-status-dot {
+            width: 6px;
+            height: 6px;
+        }
+
+    /* Spinner */
+    .modal-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 0;
+        color: var(--muted);
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 99px;
+    }
+</style>
+
+<!-- TOPBAR -->
+<header class="pg-topbar">
+    <div class="pg-topbar-left">
+        <span class="pg-logo">TM</span>
+        <span class="pg-topbar-title">TaskFlow</span>
+    </div>
+    <a href="/Manager/Dashboard" class="pg-back">
+        <i class="fa-solid fa-arrow-left"></i> Dashboard
+    </a>
+</header>
+
+<div class="pg-shell">
+
+    <!-- Header -->
+    <div class="pg-header">
+        <div>
+            <h1>Team Progress</h1>
+            <p>Live breakdown of every team member's tasks and subtasks.</p>
+        </div>
+    </div>
+
+    <!-- Summary strip -->
+    @{
+        int totalUsers = users.Count;
+        int totalTasks = users.Sum(u => u.TotalTasks);
+        int completedTasks = users.Sum(u => u.CompletedTasks);
+        int totalSubs = users.Sum(u => u.TotalSubtasks);
+        int completedSubs = users.Sum(u => u.CompletedSubtasks);
+        int inProgress = users.Sum(u => u.InProgressTasks);
+        double overallPct = (totalTasks + totalSubs) == 0 ? 0
+        : Math.Round((double)(completedTasks + completedSubs) / (totalTasks + totalSubs) * 100, 1);
+    }
+
+    <div class="summary-strip">
+        <div class="summary-card">
+            <div class="s-val blue">@totalUsers</div>
+            <div class="s-label">Team Members</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-val">@totalTasks</div>
+            <div class="s-label">Total Tasks</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-val green">@completedTasks</div>
+            <div class="s-label">Completed Tasks</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-val amber">@inProgress</div>
+            <div class="s-label">In Progress</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-val">@totalSubs</div>
+            <div class="s-label">Total Subtasks</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-val green">@overallPct%</div>
+            <div class="s-label">Overall Completion</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="pg-filters">
+        <input type="text" id="filterName" placeholder="&#xf002;  Search by name…" oninput="applyFilters()" />
+        <select id="filterDept" onchange="applyFilters()">
+            <option value="">All Departments</option>
+            @foreach (var dept in users.Select(u => u.DepartmentName).Distinct().OrderBy(d => d))
+            {
+                <option value="@dept">@dept</option>
+            }
+        </select>
+        <select id="filterRole" onchange="applyFilters()">
+            <option value="">All Roles</option>
+            <option value="Employee">Employee</option>
+            <option value="Manager">Manager</option>
+        </select>
+        <select id="filterSort" onchange="applyFilters()">
+            <option value="name">Sort: Name</option>
+            <option value="pct-desc">Sort: Completion ↓</option>
+            <option value="pct-asc">Sort: Completion ↑</option>
+            <option value="tasks-desc">Sort: Most Tasks</option>
+        </select>
+    </div>
+
+    <!-- User cards -->
+    <div class="users-grid" id="usersGrid">
+
+        @if (!users.Any())
+        {
+            <div class="empty-state">
+                <i class="fa-solid fa-chart-bar"></i>
+                No team members found.
+            </div>
+        }
+
+        @foreach (var u in users)
+        {
+            var initials = string.Concat(u.Username.Split(' ').Take(2).Select(p => p[0])).ToUpper();
+            var badgeClass = u.Role == "Manager" ? "badge-manager" : "badge-employee";
+            var ringColor = u.OverallCompletionPercent >= 75 ? "#34d399"
+            : u.OverallCompletionPercent >= 40 ? "#5b8dee"
+            : "#fbbf24";
+            // SVG ring: circumference of r=22 circle ≈ 138.2
+            var circ = 138.2;
+            var offset = circ - (circ * u.OverallCompletionPercent / 100);
+
+            <div class="user-card"
+                 data-name="@u.Username.ToLower()"
+                 data-dept="@u.DepartmentName"
+                 data-role="@u.Role"
+                 data-pct="@u.OverallCompletionPercent"
+                 data-tasks="@u.TotalTasks"
+                 onclick="openModal(@u.UserId)">
+
+                <!-- Head -->
+                <div class="uc-head">
+                    <div class="uc-avatar">@initials</div>
+                    <div class="uc-info">
+                        <div class="uc-name">@u.Username</div>
+                        <div class="uc-meta">@u.DepartmentName</div>
+                    </div>
+                    <span class="uc-badge @badgeClass">@u.Role</span>
+                </div>
+
+                <!-- Ring + bars -->
+                <div class="uc-overall">
+                    <div class="ring-wrap">
+                        <svg width="56" height="56" viewBox="0 0 56 56">
+                            <circle class="ring-bg" cx="28" cy="28" r="22" />
+                            <circle class="ring-fg"
+                                    cx="28" cy="28" r="22"
+                                    stroke="@ringColor"
+                                    stroke-dasharray="@circ"
+                                    stroke-dashoffset="@offset.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)" />
+                        </svg>
+                        <div class="ring-text">@u.OverallCompletionPercent%</div>
+                    </div>
+
+                    <div class="uc-breakdown">
+                        <div class="uc-breakdown-title">Completion</div>
+
+                        <div class="mini-bar-row">
+                            <span class="mini-bar-label">Tasks</span>
+                            <div class="mini-bar-track">
+                                <div class="mini-bar-fill"
+                                     style="width:@u.TaskCompletionPercent.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%;background:#34d399;"></div>
+                            </div>
+                            <span class="mini-bar-pct">@u.TaskCompletionPercent%</span>
+                        </div>
+
+                        <div class="mini-bar-row">
+                            <span class="mini-bar-label">Subtasks</span>
+                            <div class="mini-bar-track">
+                                <div class="mini-bar-fill"
+                                     style="width:@u.SubtaskCompletionPercent.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%;background:#5b8dee;"></div>
+                            </div>
+                            <span class="mini-bar-pct">@u.SubtaskCompletionPercent%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chips -->
+                <div class="uc-chips">
+                    <span class="chip chip-pending">
+                        <i class="fa-regular fa-clock"></i>
+                        @u.PendingTasks T · @u.PendingSubtasks ST Pending
+                    </span>
+                    <span class="chip chip-inprogress">
+                        <i class="fa-solid fa-spinner"></i>
+                        @u.InProgressTasks T · @u.InProgressSubtasks ST Active
+                    </span>
+                    <span class="chip chip-done">
+                        <i class="fa-solid fa-check"></i>
+                        @u.CompletedTasks T · @u.CompletedSubtasks ST Done
+                    </span>
+                </div>
+
+                <!-- Footer -->
+                <div class="uc-footer">
+                    <span>@u.TotalTasks task(s) · @u.TotalSubtasks subtask(s)</span>
+                    <span class="uc-footer-link">
+                        Details <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ── Detail Modal ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+    <div class="modal-box" id="modalBox">
+        <div class="modal-head">
+            <h2 id="modalTitle">User Detail</h2>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div class="modal-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading…
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ─── Filter & sort ────────────────────────────────────────────────────────────
+    function applyFilters() {
+        var name  = document.getElementById('filterName').value.toLowerCase().trim();
+        var dept  = document.getElementById('filterDept').value;
+        var role  = document.getElementById('filterRole').value;
+        var sort  = document.getElementById('filterSort').value;
+
+        var cards = Array.from(document.querySelectorAll('.user-card'));
+
+        cards.forEach(function (c) {
+            var show = true;
+            if (name && !c.dataset.name.includes(name)) show = false;
+            if (dept && c.dataset.dept !== dept)         show = false;
+            if (role && c.dataset.role !== role)         show = false;
+            c.style.display = show ? '' : 'none';
+        });
+
+        // Sort visible cards
+        var grid    = document.getElementById('usersGrid');
+        var visible = cards.filter(c => c.style.display !== 'none');
+
+        visible.sort(function (a, b) {
+            if (sort === 'pct-desc')   return parseFloat(b.dataset.pct)   - parseFloat(a.dataset.pct);
+            if (sort === 'pct-asc')    return parseFloat(a.dataset.pct)   - parseFloat(b.dataset.pct);
+            if (sort === 'tasks-desc') return parseInt(b.dataset.tasks)   - parseInt(a.dataset.tasks);
+            return a.dataset.name.localeCompare(b.dataset.name); // name
+        });
+
+        visible.forEach(function (c) { grid.appendChild(c); });
+    }
+
+    // ─── Modal ────────────────────────────────────────────────────────────────────
+    async function openModal(userId) {
+        var overlay = document.getElementById('modalOverlay');
+        var body    = document.getElementById('modalBody');
+        var title   = document.getElementById('modalTitle');
+
+        body.innerHTML = '<div class="modal-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading…</div>';
+        title.textContent = 'User Detail';
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        try {
+            var resp = await fetch('/Manager/Progress/User/' + userId);
+            if (!resp.ok) throw new Error('Failed to load');
+            var u = await resp.json();
+
+            title.textContent = u.username + ' — Progress';
+
+            var dotClass = function(status) {
+                if (status === 'Completed') return 'dot-completed';
+                if (status === 'InProgress') return 'dot-inprogress';
+                return 'dot-pending';
+            };
+
+            var tasksHtml = (u.tasks && u.tasks.length > 0)
+                ? u.tasks.map(function(t, i) {
+                    var subtasksHtml = (t.subtasks && t.subtasks.length > 0)
+                        ? t.subtasks.map(function(s) {
+                            return '<div class="subtask-row">'
+                                + '<span class="ti-status-dot ' + dotClass(s.status) + '"></span>'
+                                + '<span>' + escHtml(s.title) + '</span>'
+                                + '<span style="margin-left:auto;font-size:11px;color:var(--muted);">' + s.status + '</span>'
+                                + '</div>';
+                        }).join('')
+                        : '<div class="subtask-row" style="color:var(--muted);font-style:italic;">No subtasks</div>';
+
+                    return '<div class="task-item" id="ti-' + i + '">'
+                        + '<div class="task-item-head" onclick="toggleTask(' + i + ')">'
+                        + '<span class="ti-status-dot ' + dotClass(t.status) + '"></span>'
+                        + '<span class="ti-title">' + escHtml(t.title) + '</span>'
+                        + '<span class="ti-sub-count">' + t.completedSubtasks + '/' + t.totalSubtasks + ' subtasks</span>'
+                        + '<i class="fa-solid fa-chevron-right ti-chevron"></i>'
+                        + '</div>'
+                        + '<div class="task-item-body">' + subtasksHtml + '</div>'
+                        + '</div>';
+                }).join('')
+                : '<div style="color:var(--muted);font-size:13px;padding:16px 0;">No tasks assigned.</div>';
+
+            body.innerHTML =
+                '<div class="modal-stats">'
+                + '<div class="modal-stat"><div class="ms-val" style="color:var(--green);">' + u.overallCompletionPercent + '%</div><div class="ms-label">Overall</div></div>'
+                + '<div class="modal-stat"><div class="ms-val" style="color:var(--accent);">' + u.taskCompletionPercent + '%</div><div class="ms-label">Tasks</div></div>'
+                + '<div class="modal-stat"><div class="ms-val" style="color:var(--accent);">' + u.subtaskCompletionPercent + '%</div><div class="ms-label">Subtasks</div></div>'
+                + '<div class="modal-stat"><div class="ms-val">' + u.totalTasks + '</div><div class="ms-label">Total Tasks</div></div>'
+                + '<div class="modal-stat"><div class="ms-val" style="color:var(--amber);">' + u.pendingTasks + '</div><div class="ms-label">Pending</div></div>'
+                + '<div class="modal-stat"><div class="ms-val" style="color:var(--green);">' + u.completedTasks + '</div><div class="ms-label">Completed</div></div>'
+                + '</div>'
+                + '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Tasks &amp; Subtasks</div>'
+                + '<div class="task-list">' + tasksHtml + '</div>';
+
+        } catch(e) {
+            body.innerHTML = '<div style="color:var(--red);padding:24px 0;text-align:center;">Failed to load details.</div>';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function closeModalOutside(e) {
+        if (e.target === document.getElementById('modalOverlay')) closeModal();
+    }
+
+    function toggleTask(i) {
+        var el = document.getElementById('ti-' + i);
+        el.classList.toggle('open');
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>

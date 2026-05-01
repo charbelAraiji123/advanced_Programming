@@ -440,3 +440,6 @@ C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\obj\Debug\net8.0\refint\Fin
 C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.pdb
 C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.genruntimeconfig.cache
 C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\obj\Debug\net8.0\ref\Final_Project_Adv.dll
+C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll

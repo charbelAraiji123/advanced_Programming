@@ -4,6 +4,10 @@ using TaskStatusEnum = Final_Project_Adv.Domain.Enums.TaskStatus;
 
 namespace Final_Project_Adv.Domain.DTO;
 
+// ═══════════════════════════════════════════════════════════════
+//  USER
+// ═══════════════════════════════════════════════════════════════
+
 public record UsersDto
 {
     public int Id { get; set; }
@@ -13,7 +17,7 @@ public record UsersDto
     public int DepartmentId { get; set; }
 }
 
-public class CreateUserDto  // ← changed from 'record' to 'class'
+public class CreateUserDto
 {
     [Required(ErrorMessage = "Username is required")]
     [MinLength(3, ErrorMessage = "Username must be at least 3 characters")]
@@ -34,6 +38,18 @@ public class CreateUserDto  // ← changed from 'record' to 'class'
     public int? DepartmentId { get; set; }
 }
 
+public record UpdateUserDto(
+    string Username,
+    string Password,
+    string Email,
+    string Role,
+    int DepartmentId
+);
+
+// ═══════════════════════════════════════════════════════════════
+//  AUDIT
+// ═══════════════════════════════════════════════════════════════
+
 public class AuditLogDto
 {
     public int Id { get; set; }
@@ -47,13 +63,9 @@ public class AuditLogDto
     public DateTime PerformedAt { get; set; }
 }
 
-public record UpdateUserDto(
-    string Username,
-    string Password,
-    string Email,
-    string Role,
-    int DepartmentId
-);
+// ═══════════════════════════════════════════════════════════════
+//  DEPARTMENT
+// ═══════════════════════════════════════════════════════════════
 
 public record DepartmentDto
 {
@@ -68,6 +80,10 @@ public record CreateDepartmentDto
 {
     public string Name { get; set; }
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  TASK
+// ═══════════════════════════════════════════════════════════════
 
 public record TaskItemDto(
     int Id,
@@ -88,6 +104,14 @@ public class CreateTaskItemDto
     public int DepartmentId { get; set; }
 }
 
+public record UpdateTaskDTO(
+    string Title,
+    string Description,
+    string Status,
+    int DepartmentId,
+    DateTime UpdatedAt
+);
+
 public record TaskAssignmentDto(
     int TaskItemId,
     TaskItemDto TaskItem,
@@ -95,6 +119,35 @@ public record TaskAssignmentDto(
     UsersDto User,
     DateTime AssignedAt
 );
+
+public record TaskWithSubtasksDto(
+    int Id,
+    string Title,
+    string Description,
+    TaskStatusEnum Status,
+    int CreatedById,
+    int DepartmentId,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    List<SubtaskDto> Subtasks
+);
+
+public record TaskDashboardItemDto(
+    int Id,
+    string Title,
+    string Description,
+    TaskStatusEnum Status,
+    int CreatedById,
+    int DepartmentId,
+    string DepartmentName,
+    string? AssignedUsername,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+);
+
+// ═══════════════════════════════════════════════════════════════
+//  SUBTASK
+// ═══════════════════════════════════════════════════════════════
 
 public record SubtaskDto(
     int Id,
@@ -116,14 +169,6 @@ public record CreateSubtaskDto(
     int? AssignedToId
 );
 
-public record UpdateTaskDTO(
-    string Title,
-    string Description,
-    string Status,
-    int DepartmentId,
-    DateTime UpdatedAt
-);
-
 public record UpdateSubTaskDTO(
     string Title,
     string Description,
@@ -131,6 +176,10 @@ public record UpdateSubTaskDTO(
     int AssignedId,
     DateTime UpdatedAt
 );
+
+// ═══════════════════════════════════════════════════════════════
+//  TASK STATUS (user view)
+// ═══════════════════════════════════════════════════════════════
 
 public class UserTaskStatusDto
 {
@@ -153,6 +202,10 @@ public class SubtaskStatusDto
     public string Title { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  COMMENTS
+// ═══════════════════════════════════════════════════════════════
 
 public class TaskCommentDto
 {
@@ -190,17 +243,9 @@ public class CreateSubtaskCommentDto
     public int SubtaskId { get; set; }
 }
 
-public record TaskWithSubtasksDto(
-    int Id,
-    string Title,
-    string Description,
-    TaskStatusEnum Status,
-    int CreatedById,
-    int DepartmentId,
-    DateTime CreatedAt,
-    DateTime UpdatedAt,
-    List<SubtaskDto> Subtasks
-);
+// ═══════════════════════════════════════════════════════════════
+//  PERMISSIONS
+// ═══════════════════════════════════════════════════════════════
 
 public class UserPermissionDto
 {
@@ -222,15 +267,60 @@ public class RevokePermissionDto
     public PermissionType Permission { get; set; }
 }
 
-public record TaskDashboardItemDto(
-    int Id,
-    string Title,
-    string Description,
-    TaskStatusEnum Status,
-    int CreatedById,
-    int DepartmentId,
-    string DepartmentName,
-    string? AssignedUsername,
-    DateTime CreatedAt,
-    DateTime UpdatedAt
-);
+// ═══════════════════════════════════════════════════════════════
+//  PROGRESS TRACKING  (NEW)
+// ═══════════════════════════════════════════════════════════════
+
+public class UserProgressDto
+{
+    public int UserId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string DepartmentName { get; set; } = string.Empty;
+
+    // Task counts
+    public int TotalTasks { get; set; }
+    public int PendingTasks { get; set; }
+    public int InProgressTasks { get; set; }
+    public int CompletedTasks { get; set; }
+    public double TaskCompletionPercent =>
+        TotalTasks == 0 ? 0 : Math.Round((double)CompletedTasks / TotalTasks * 100, 1);
+
+    // Subtask counts
+    public int TotalSubtasks { get; set; }
+    public int PendingSubtasks { get; set; }
+    public int InProgressSubtasks { get; set; }
+    public int CompletedSubtasks { get; set; }
+    public double SubtaskCompletionPercent =>
+        TotalSubtasks == 0 ? 0 : Math.Round((double)CompletedSubtasks / TotalSubtasks * 100, 1);
+
+    // Combined overall
+    public int TotalItems => TotalTasks + TotalSubtasks;
+    public int CompletedItems => CompletedTasks + CompletedSubtasks;
+    public double OverallCompletionPercent =>
+        TotalItems == 0 ? 0 : Math.Round((double)CompletedItems / TotalItems * 100, 1);
+
+    // Task detail breakdown
+    public List<TaskProgressDto> Tasks { get; set; } = new();
+}
+
+public class TaskProgressDto
+{
+    public int TaskId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+
+    public int TotalSubtasks { get; set; }
+    public int CompletedSubtasks { get; set; }
+    public double SubtaskPercent =>
+        TotalSubtasks == 0 ? 0 : Math.Round((double)CompletedSubtasks / TotalSubtasks * 100, 1);
+
+    public List<SubtaskProgressDto> Subtasks { get; set; } = new();
+}
+
+public class SubtaskProgressDto
+{
+    public int SubtaskId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+}

@@ -1,4 +1,5 @@
 ﻿using Final_Project_Adv.Domain.DTO;
+using Final_Project_Adv.Domain.Enums;
 using Final_Project_Adv.Models;
 using Final_Project_Adv.Services;
 using Final_Project_Adv.Infrastructure.Data;
@@ -37,13 +38,8 @@ namespace Final_Project_Adv.Controllers
         private async Task LoadDepartmentsAsync()
         {
             var departments = await _context.Department
-                .Select(d => new SelectListItem
-                {
-                    Value = d.Id.ToString(),
-                    Text = d.Name
-                })
+                .Select(d => new SelectListItem { Value = d.Id.ToString(), Text = d.Name })
                 .ToListAsync();
-
             ViewBag.Departments = departments;
         }
 
@@ -65,26 +61,169 @@ namespace Final_Project_Adv.Controllers
             return View();
         }
 
+        [HttpGet("GetUsersList")]
+        public async Task<IActionResult> GetUsersList()
+        {
+            if (!IsAdmin()) return Unauthorized();
+            var users = await _context.Users
+                .Select(u => new { u.Id, u.Username, u.Email, u.Role })
+                .ToListAsync();
+            return Ok(users);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // PERMISSIONS
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet("Permissions")]
+        public async Task<IActionResult> Permissions(string? search, string? filterRole)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+
+            // Load all non-admin users with their current permissions
+            var query = _context.Users
+                .Include(u => u.Permissions)
+                .Where(u => u.Role != UserRoles.Admin)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(u => u.Username.Contains(search) || u.Email.Contains(search));
+
+            if (!string.IsNullOrWhiteSpace(filterRole))
+                query = query.Where(u => u.Role == filterRole);
+
+            var users = await query
+                .OrderBy(u => u.Role)
+                .ThenBy(u => u.Username)
+                .Select(u => new UserPermissionsViewModel
+                {
+                    UserId = u.Id,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Role = u.Role,
+                    Permissions = u.Permissions.Select(p => p.Permission).ToList()
+                })
+                .ToListAsync();
+
+            ViewBag.AllPermissions = Enum.GetValues<PermissionType>().ToList();
+            ViewBag.Search = search;
+            ViewBag.FilterRole = filterRole;
+
+            return View(users);
+        }
+
+        // Called via AJAX — grants a single permission
+        [HttpPost("Permissions/Grant")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GrantPermission([FromBody] GrantPermissionDto dto)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            dto.GrantedById = GetAdminId();
+
+            try
+            {
+                var result = await _adminServices.GrantPermissionToUserAsync(dto);
+                await _auditService.LogAsync(
+                    "GrantedPermission", "UserPermission", dto.UserId,
+                    null, new { dto.UserId, Permission = dto.Permission.ToString() },
+                    GetAdminId());
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Called via AJAX — revokes a single permission
+        [HttpPost("Permissions/Revoke")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RevokePermission([FromBody] RevokePermissionDto dto)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            try
+            {
+                var result = await _adminServices.RevokePermissionFromUserAsync(dto);
+                await _auditService.LogAsync(
+                    "RevokedPermission", "UserPermission", dto.UserId,
+                    new { dto.UserId, Permission = dto.Permission.ToString() }, null,
+                    GetAdminId());
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Called via AJAX — bulk-sets all permissions for a user (replaces current set)
+        [HttpPost("Permissions/SetAll")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetAllPermissions([FromBody] SetAllPermissionsDto dto)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            try
+            {
+                int adminId = GetAdminId();
+
+                // Get current permissions
+                var current = await _context.UserPermission
+                    .Where(p => p.UserId == dto.UserId)
+                    .Select(p => p.Permission)
+                    .ToListAsync();
+
+                var desired = dto.Permissions ?? new List<PermissionType>();
+
+                // Grant new ones
+                foreach (var perm in desired.Except(current))
+                {
+                    await _adminServices.GrantPermissionToUserAsync(new GrantPermissionDto
+                    {
+                        UserId = dto.UserId,
+                        GrantedById = adminId,
+                        Permission = perm
+                    });
+                }
+
+                // Revoke removed ones
+                foreach (var perm in current.Except(desired))
+                {
+                    await _adminServices.RevokePermissionFromUserAsync(new RevokePermissionDto
+                    {
+                        UserId = dto.UserId,
+                        Permission = perm
+                    });
+                }
+
+                await _auditService.LogAsync(
+                    "BulkSetPermissions", "UserPermission", dto.UserId,
+                    new { Removed = current.Except(desired).Select(p => p.ToString()) },
+                    new { Added = desired.Except(current).Select(p => p.ToString()) },
+                    adminId);
+
+                var updated = await _adminServices.GetUserPermissionsAsync(dto.UserId);
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         // AUDIT LOGS
         // ─────────────────────────────────────────────────────────────────────
 
         [HttpGet("AuditLogs")]
-        public async Task<IActionResult> AuditLogs(
-            string? search,
-            string? filterAction,
-            string? filterEntity,
-            int page = 1)
+        public async Task<IActionResult> AuditLogs(string? search, string? filterAction, string? filterEntity, int page = 1)
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Account");
 
             const int pageSize = 20;
+            var query = _context.AuditLog.Include(a => a.PerformedBy).AsQueryable();
 
-            var query = _context.AuditLog
-                .Include(a => a.PerformedBy)
-                .AsQueryable();
-
-            // Filters
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(a =>
                     a.EntityType.Contains(search) ||
@@ -117,11 +256,8 @@ namespace Final_Project_Adv.Controllers
                 })
                 .ToListAsync();
 
-            // Distinct values for filter dropdowns
             ViewBag.Actions = await _context.AuditLog.Select(a => a.Action).Distinct().ToListAsync();
             ViewBag.Entities = await _context.AuditLog.Select(a => a.EntityType).Distinct().ToListAsync();
-
-            // Pagination info
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             ViewBag.TotalCount = totalCount;
@@ -180,7 +316,6 @@ namespace Final_Project_Adv.Controllers
                     Role = role,
                     DepartmentId = deptId
                 };
-
                 await _adminServices.CreateUserAsync(dto, GetAdminId());
                 TempData["Success"] = $"User '{username}' created successfully.";
                 return RedirectToAction("UserManagement");
@@ -190,7 +325,6 @@ namespace Final_Project_Adv.Controllers
                 ModelState.AddModelError("", $"Error: {ex.Message}");
                 if (ex.InnerException != null)
                     ModelState.AddModelError("", $"Detail: {ex.InnerException.Message}");
-
                 await LoadDepartmentsAsync();
                 return View("CreateUser", new CreateUserDto());
             }
@@ -204,18 +338,14 @@ namespace Final_Project_Adv.Controllers
         public async Task<IActionResult> GetUser(int id)
         {
             if (!IsAdmin()) return Unauthorized(new { message = "Access denied." });
-
-            if (id <= 0)
-                return BadRequest(new { message = "ID must be a positive integer." });
+            if (id <= 0) return BadRequest(new { message = "ID must be a positive integer." });
 
             var user = await _context.Users
                 .Where(u => u.Id == id)
                 .Select(u => new { u.Id, u.Username, u.Email, u.Role, u.DepartmentId })
                 .FirstOrDefaultAsync();
 
-            if (user == null)
-                return NotFound(new { message = $"No user found with ID {id}." });
-
+            if (user == null) return NotFound(new { message = $"No user found with ID {id}." });
             return Ok(user);
         }
 
@@ -251,59 +381,31 @@ namespace Final_Project_Adv.Controllers
             }
 
             if (!int.TryParse(idStr, out int userId) || userId <= 0)
-            {
-                ModelState.AddModelError("", "Invalid or missing user ID. Please search for a user first.");
-                return ReturnWithErrors();
-            }
+            { ModelState.AddModelError("", "Invalid or missing user ID."); return ReturnWithErrors(); }
 
             if (string.IsNullOrWhiteSpace(username) || username.Length < 3)
-            {
-                ModelState.AddModelError("", "Username must be at least 3 characters.");
-                return ReturnWithErrors();
-            }
+            { ModelState.AddModelError("", "Username must be at least 3 characters."); return ReturnWithErrors(); }
 
             var emailValidator = new System.ComponentModel.DataAnnotations.EmailAddressAttribute();
             if (string.IsNullOrWhiteSpace(email) || !emailValidator.IsValid(email))
-            {
-                ModelState.AddModelError("", "A valid email is required.");
-                return ReturnWithErrors();
-            }
+            { ModelState.AddModelError("", "A valid email is required."); return ReturnWithErrors(); }
 
             if (string.IsNullOrWhiteSpace(role))
-            {
-                ModelState.AddModelError("", "Role is required.");
-                return ReturnWithErrors();
-            }
+            { ModelState.AddModelError("", "Role is required."); return ReturnWithErrors(); }
 
             if (!int.TryParse(deptIdStr, out int deptId) || deptId <= 0)
-            {
-                ModelState.AddModelError("", "Please select a valid department.");
-                return ReturnWithErrors();
-            }
+            { ModelState.AddModelError("", "Please select a valid department."); return ReturnWithErrors(); }
 
             try
             {
-                var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
-                if (!userExists)
-                {
-                    ModelState.AddModelError("", $"User with ID {userId} does not exist.");
-                    return ReturnWithErrors();
-                }
+                if (!await _context.Users.AnyAsync(u => u.Id == userId))
+                { ModelState.AddModelError("", $"User with ID {userId} does not exist."); return ReturnWithErrors(); }
 
-                var usernameTaken = await _context.Users
-                    .AnyAsync(u => u.Username == username && u.Id != userId);
-                if (usernameTaken)
-                {
-                    ModelState.AddModelError("", $"Username '{username}' is already taken by another user.");
-                    return ReturnWithErrors();
-                }
+                if (await _context.Users.AnyAsync(u => u.Username == username && u.Id != userId))
+                { ModelState.AddModelError("", $"Username '{username}' is already taken."); return ReturnWithErrors(); }
 
-                var deptExists = await _context.Department.AnyAsync(d => d.Id == deptId);
-                if (!deptExists)
-                {
-                    ModelState.AddModelError("", $"Department with ID {deptId} does not exist.");
-                    return ReturnWithErrors();
-                }
+                if (!await _context.Department.AnyAsync(d => d.Id == deptId))
+                { ModelState.AddModelError("", $"Department with ID {deptId} does not exist."); return ReturnWithErrors(); }
 
                 await _adminServices.UpdateUserAsync(new UsersDto
                 {
@@ -342,19 +444,11 @@ namespace Final_Project_Adv.Controllers
             if (!IsAdmin()) return RedirectToAction("Login", "Account");
 
             var idStr = Request.Form["Id"].ToString();
-
             if (!int.TryParse(idStr, out int userId) || userId <= 0)
-            {
-                TempData["Error"] = "Invalid user ID.";
-                return RedirectToAction("DeleteUser");
-            }
+            { TempData["Error"] = "Invalid user ID."; return RedirectToAction("DeleteUser"); }
 
-            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
-            if (!userExists)
-            {
-                TempData["Error"] = $"User with ID {userId} does not exist.";
-                return RedirectToAction("DeleteUser");
-            }
+            if (!await _context.Users.AnyAsync(u => u.Id == userId))
+            { TempData["Error"] = $"User with ID {userId} does not exist."; return RedirectToAction("DeleteUser"); }
 
             await _adminServices.DeleteUserAsync(userId, GetAdminId());
             TempData["Success"] = $"User with ID {userId} deleted successfully.";
@@ -362,7 +456,7 @@ namespace Final_Project_Adv.Controllers
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // DEBUG / TEST HELPERS (remove before production)
+        // DEBUG HELPERS (remove before production)
         // ─────────────────────────────────────────────────────────────────────
 
         [HttpGet("TestSave")]
@@ -380,7 +474,6 @@ namespace Final_Project_Adv.Controllers
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-
                 _context.Users.Add(user);
                 int rows = await _context.SaveChangesAsync();
                 return Ok($"Success! Rows: {rows}, New User ID: {user.Id}");
@@ -400,7 +493,6 @@ namespace Final_Project_Adv.Controllers
             var password = Request.Form["Password"].ToString();
             var role = Request.Form["Role"].ToString();
             var deptId = int.Parse(Request.Form["DepartmentId"].ToString());
-
             try
             {
                 var user = new Users
@@ -413,7 +505,6 @@ namespace Final_Project_Adv.Controllers
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-
                 _context.Users.Add(user);
                 int rows = await _context.SaveChangesAsync();
                 return Ok($"Success! Rows: {rows}, ID: {user.Id}, Username: {user.Username}");

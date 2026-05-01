@@ -1,0 +1,623 @@
+﻿@model List<Final_Project_Adv.Models.UserPermissionsViewModel>
+
+@{
+    ViewData["Title"] = "Permission Management";
+    var allPermissions = (List<Final_Project_Adv.Domain.Enums.PermissionType>)ViewBag.AllPermissions;
+    string? search = ViewBag.Search;
+    string? filterRole = ViewBag.FilterRole;
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root { 
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+        --success: #10b981;
+        --danger: #ef4444;
+        --bg: #f8fafc;
+        --text: #1e293b;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --radius: 10px;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    /* ── Page header ── */
+    .page-wrap {
+        padding: 36px 28px;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0 0 4px;
+        }
+
+        .page-header p {
+            color: var(--muted);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: flex-end;
+        margin-bottom: 24px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex: 1;
+        min-width: 160px;
+    }
+
+        .filter-group label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.875rem;
+            color: var(--text);
+            background: #fff;
+            outline: none;
+            transition: border-color .2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+            .filter-group input:focus,
+            .filter-group select:focus {
+                border-color: var(--primary);
+            }
+
+    .btn-filter {
+        padding: 9px 20px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 7px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        align-self: flex-end;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: background .2s;
+        font-family: 'Inter', sans-serif;
+    }
+
+        .btn-filter:hover {
+            background: var(--primary-hover);
+        }
+
+    .btn-clear {
+        padding: 9px 16px;
+        background: white;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        align-self: flex-end;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: all .2s;
+        font-family: 'Inter', sans-serif;
+    }
+
+        .btn-clear:hover {
+            background: #f1f5f9;
+            color: var(--text);
+        }
+
+    /* ── User cards grid ── */
+    .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 20px;
+    }
+
+    .user-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: box-shadow .2s;
+    }
+
+        .user-card:hover {
+            box-shadow: 0 8px 24px -4px rgba(0,0,0,.1);
+        }
+
+    /* Card header */
+    .card-head {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #eef2ff;
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .card-head-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .card-username {
+        font-weight: 600;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .card-email {
+        font-size: 0.78rem;
+        color: var(--muted);
+    }
+
+    .role-badge {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .role-manager {
+        background: #fef9c3;
+        color: #a16207;
+    }
+
+    .role-employee {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+    /* Permission toggles */
+    .perms-body {
+        padding: 16px 20px;
+    }
+
+    .perms-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .select-all-btn {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--primary);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        text-transform: none;
+        letter-spacing: 0;
+        font-family: 'Inter', sans-serif;
+    }
+
+        .select-all-btn:hover {
+            text-decoration: underline;
+        }
+
+    .perm-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .perm-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all .15s;
+        font-size: 0.8rem;
+        font-weight: 500;
+        user-select: none;
+    }
+
+        .perm-toggle:hover {
+            border-color: var(--primary);
+            background: #f5f3ff;
+        }
+
+        .perm-toggle.active {
+            background: #eef2ff;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .perm-toggle .perm-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            flex-shrink: 0;
+            transition: background .15s;
+        }
+
+        .perm-toggle.active .perm-dot {
+            background: var(--primary);
+        }
+
+    /* Card footer */
+    .card-foot {
+        padding: 12px 20px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .save-status {
+        font-size: 0.78rem;
+        font-weight: 500;
+        min-height: 18px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity .3s;
+    }
+
+        .save-status.success {
+            color: var(--success);
+        }
+
+        .save-status.error {
+            color: var(--danger);
+        }
+
+    .btn-save {
+        padding: 8px 18px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 7px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background .2s;
+        font-family: 'Inter', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+        .btn-save:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-save:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+    /* ── Empty state ── */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+    }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            opacity: .3;
+            display: block;
+        }
+
+    /* ── Back link ── */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-top: 32px;
+        transition: color .2s;
+    }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
+    /* ── Toast ── */
+    #toast {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        background: #1e293b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,.2);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 9999;
+        max-width: 320px;
+    }
+
+        #toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #toast.toast-success {
+            background: #064e3b;
+        }
+
+        #toast.toast-error {
+            background: #7f1d1d;
+        }
+</style>
+
+<div class="page-wrap">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1><i class="fa-solid fa-shield-halved" style="color:var(--primary);margin-right:10px;"></i>Permission Management</h1>
+            <p>Grant or revoke specific action rights for managers and employees.</p>
+        </div>
+        <span style="background:#eef2ff;color:var(--primary);font-size:.8rem;font-weight:600;padding:5px 14px;border-radius:20px;align-self:center;">
+            @Model.Count user@(Model.Count != 1 ? "s" : "")
+        </span>
+    </div>
+
+    <!-- Filter bar -->
+    <form method="get" action="/Admin/Permissions" class="filter-bar">
+        <div class="filter-group" style="flex:2;min-width:200px;">
+            <label>Search</label>
+            <input type="text" name="search" value="@search" placeholder="Username or email…">
+        </div>
+        <div class="filter-group">
+            <label>Role</label>
+            <select name="filterRole">
+                <option value="">All roles</option>
+                <option value="Manager" selected="@(filterRole == "Manager" ? "selected" : null)">Manager</option>
+                <option value="Employee" selected="@(filterRole == "Employee" ? "selected" : null)">Employee</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-filter"><i class="fa-solid fa-magnifying-glass"></i> Filter</button>
+        <a href="/Admin/Permissions" class="btn-clear"><i class="fa-solid fa-xmark"></i> Clear</a>
+    </form>
+
+    <!-- User permission cards -->
+    <div class="users-grid">
+
+        @if (Model.Count == 0)
+        {
+            <div class="empty-state">
+                <i class="fa-solid fa-users-slash"></i>
+                <p>No users found matching your filters.</p>
+            </div>
+        }
+
+        @foreach (var user in Model)
+        {
+            var hasPerms = user.Permissions.Count > 0;
+            <div class="user-card" id="card-@user.UserId">
+
+                <!-- Card header -->
+                <div class="card-head">
+                    <div class="avatar">@user.Username.Substring(0, 1).ToUpper()</div>
+                    <div class="card-head-info">
+                        <div class="card-username">@user.Username</div>
+                        <div class="card-email">@user.Email</div>
+                    </div>
+                    <span class="role-badge @(user.Role == "Manager" ? "role-manager" : "role-employee")">
+                        @user.Role
+                    </span>
+                </div>
+
+                <!-- Permission toggles -->
+                <div class="perms-body">
+                    <div class="perms-label">
+                        Permissions
+                        <button type="button" class="select-all-btn"
+                                onclick="toggleAll(@user.UserId, this)">
+                            Select all
+                        </button>
+                    </div>
+
+                    <div class="perm-grid" id="perm-grid-@user.UserId">
+                        @foreach (var perm in allPermissions)
+                        {
+                            var active = user.Permissions.Contains(perm);
+                            <div class="perm-toggle @(active ? "active" : "")"
+                                 id="perm-@user.UserId-@perm"
+                                 onclick="togglePerm(@user.UserId, '@perm', this)">
+                                <span class="perm-dot"></span>
+                                @perm
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Footer: status + save -->
+                <div class="card-foot">
+                    <span class="save-status" id="status-@user.UserId"></span>
+                    <button class="btn-save" id="save-@user.UserId"
+                            onclick="savePermissions(@user.UserId)">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <a href="/Admin/Panel" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Admin Panel
+    </a>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    // ── State: track pending changes per user (Map<userId, Set<permName>>)
+    const pending = {};
+
+    function getToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]').value;
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `show toast-${type}`;
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.className = '', 3000);
+    }
+
+    function setStatus(userId, msg, type) {
+        const el = document.getElementById(`status-${userId}`);
+        el.textContent = msg;
+        el.className = `save-status ${type}`;
+    }
+
+    // Toggle a single permission chip (visual only — saved on "Save Changes")
+    function togglePerm(userId, permName, el) {
+        el.classList.toggle('active');
+    }
+
+    // Select / deselect all for a user card
+    function toggleAll(userId, btn) {
+        const grid      = document.getElementById(`perm-grid-${userId}`);
+        const toggles   = grid.querySelectorAll('.perm-toggle');
+        const allActive = [...toggles].every(t => t.classList.contains('active'));
+
+        toggles.forEach(t => {
+            if (allActive) t.classList.remove('active');
+            else           t.classList.add('active');
+        });
+
+        btn.textContent = allActive ? 'Select all' : 'Deselect all';
+    }
+
+    // Collect current UI state and POST to /Admin/Permissions/SetAll
+    async function savePermissions(userId) {
+        const grid    = document.getElementById(`perm-grid-${userId}`);
+        const btn     = document.getElementById(`save-${userId}`);
+        const toggles = grid.querySelectorAll('.perm-toggle.active');
+
+        // Build permission int list (enum values) from active toggle IDs
+        const permissions = [...toggles].map(t => {
+            // id format: perm-{userId}-{PermName}
+            const parts = t.id.split('-');
+            parts.shift(); parts.shift(); // remove "perm" and userId
+            return parts.join('-');       // rejoin (in case perm name has hyphens)
+        });
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+        setStatus(userId, '', '');
+
+        try {
+            const resp = await fetch('/Admin/Permissions/SetAll', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getToken()
+                },
+                body: JSON.stringify({ userId, permissions })
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error(err.message || 'Server error');
+            }
+
+            setStatus(userId, '✓ Saved', 'success');
+            showToast(`Permissions updated for user #${userId}`);
+        } catch (e) {
+            setStatus(userId, `✗ ${e.message}`, 'error');
+            showToast(e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+        }
+    }
+</script>

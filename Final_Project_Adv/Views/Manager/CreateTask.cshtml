@@ -1,0 +1,697 @@
+﻿@{
+    ViewData["Title"] = "Create New Task";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --primary: #6c63ff;
+        --primary-hover: #574fd6;
+        --bg: #f4f6f9;
+        --text: #1e1e2d;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --radius: 10px;
+        --success: #10b981;
+        --danger: #ef4444;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+    }
+
+    .ct-shell {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .ct-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        height: 60px;
+        background: #1e1e2d;
+        color: #fff;
+    }
+
+    .ct-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ct-logo-mark {
+        background: var(--primary);
+        color: #fff;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .ct-logo-text {
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .ct-back {
+        color: #aaa;
+        text-decoration: none;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: color .2s;
+    }
+
+        .ct-back:hover {
+            color: #fff;
+        }
+
+    .ct-main {
+        padding: 40px 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .ct-card {
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 16px rgba(0,0,0,.06);
+        width: 100%;
+        max-width: 680px;
+        overflow: hidden;
+    }
+
+    /* Steps */
+    .ct-steps {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .ct-step {
+        flex: 1;
+        padding: 18px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: .85rem;
+        font-weight: 500;
+        color: var(--muted);
+        border-bottom: 3px solid transparent;
+        transition: all .2s;
+        user-select: none;
+    }
+
+        .ct-step.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .ct-step.done {
+            color: var(--success);
+            border-bottom-color: var(--success);
+        }
+
+    .ct-step-num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: var(--muted);
+        font-size: .8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all .2s;
+    }
+
+    .ct-step.active .ct-step-num {
+        background: var(--primary);
+        color: #fff;
+    }
+
+    .ct-step.done .ct-step-num {
+        background: var(--success);
+        color: #fff;
+    }
+
+    /* Panels */
+    .ct-panel {
+        display: none;
+        padding: 32px;
+    }
+
+        .ct-panel.active {
+            display: block;
+        }
+
+    .ct-panel-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0 0 6px;
+    }
+
+    .ct-panel-sub {
+        font-size: .875rem;
+        color: var(--muted);
+        margin: 0 0 28px;
+    }
+
+    /* Form fields */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 7px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: .9rem;
+            color: var(--text);
+            background: #fff;
+            outline: none;
+            transition: border-color .2s;
+            font-family: 'Inter',sans-serif;
+        }
+
+            .form-group input:focus,
+            .form-group textarea:focus,
+            .form-group select:focus {
+                border-color: var(--primary);
+            }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+    /* Employee cards */
+    .emp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill,minmax(180px,1fr));
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+    .emp-card {
+        padding: 14px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all .15s;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .emp-card:hover {
+            border-color: var(--primary);
+            background: #f5f3ff;
+        }
+
+        .emp-card.selected {
+            border-color: var(--primary);
+            background: #eef2ff;
+        }
+
+        .emp-card.full {
+            opacity: .55;
+            cursor: not-allowed;
+            border-color: #fecaca;
+            background: #fff5f5;
+        }
+
+    .emp-name {
+        font-weight: 600;
+        font-size: .875rem;
+    }
+
+    .emp-role {
+        font-size: .72rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        width: fit-content;
+    }
+
+    .emp-role-manager {
+        background: #fef9c3;
+        color: #a16207;
+    }
+
+    .emp-role-employee {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .emp-tasks {
+        font-size: .75rem;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+    .emp-full-badge {
+        font-size: .7rem;
+        color: #ef4444;
+        font-weight: 600;
+        margin-top: 2px;
+    }
+
+    .emp-loading {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 28px 0;
+        color: var(--muted);
+        font-size: .875rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .emp-empty {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 28px 0;
+        color: var(--muted);
+        font-size: .875rem;
+    }
+
+    /* Buttons */
+    .ct-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 32px;
+        border-top: 1px solid var(--border);
+        background: #fafafa;
+    }
+
+    .btn-next, .btn-submit {
+        padding: 10px 24px;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: .9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background .2s;
+        font-family: 'Inter',sans-serif;
+    }
+
+        .btn-next:hover, .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-next:disabled, .btn-submit:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+    .btn-back-step {
+        padding: 10px 20px;
+        background: white;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: .9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all .2s;
+        font-family: 'Inter',sans-serif;
+    }
+
+        .btn-back-step:hover {
+            background: #f1f5f9;
+            color: var(--text);
+        }
+
+    /* Errors */
+    .error-list {
+        background: #fff5f5;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        font-size: .875rem;
+        color: #b91c1c;
+        list-style: none;
+    }
+
+        .error-list li {
+            padding: 2px 0;
+        }
+
+    /* Review summary */
+    .summary-row {
+        display: flex;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: .875rem;
+    }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+    .summary-key {
+        color: var(--muted);
+        font-weight: 500;
+        min-width: 120px;
+    }
+
+    .summary-val {
+        font-weight: 600;
+        color: var(--text);
+    }
+</style>
+
+<div class="ct-shell">
+
+    <!-- TOPBAR -->
+    <header class="ct-topbar">
+        <div class="ct-topbar-left">
+            <span class="ct-logo-mark">TM</span>
+            <span class="ct-logo-text">TaskFlow</span>
+        </div>
+        <a href="/Manager/Dashboard" class="ct-back">
+            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </header>
+
+    <main class="ct-main">
+
+        <div style="width:100%;max-width:680px;margin-bottom:24px;">
+            <h1 style="font-size:1.5rem;font-weight:700;margin:0 0 4px;">Create New Task</h1>
+            <p style="color:var(--muted);font-size:.9rem;margin:0;">
+                Fill in the details, then assign it to a team member.
+            </p>
+        </div>
+
+        <!-- Server-side validation errors -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <ul class="error-list" style="width:100%;max-width:680px;">
+                @foreach (var e in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li><i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i>@e.ErrorMessage</li>
+                }
+            </ul>
+        }
+
+        <div class="ct-card">
+
+            <!-- Step indicators -->
+            <div class="ct-steps">
+                <div class="ct-step active" id="step-tab-1">
+                    <div class="ct-step-num" id="step-num-1">1</div>
+                    <span>Department</span>
+                </div>
+                <div class="ct-step" id="step-tab-2">
+                    <div class="ct-step-num" id="step-num-2">2</div>
+                    <span>Task Details</span>
+                </div>
+                <div class="ct-step" id="step-tab-3">
+                    <div class="ct-step-num" id="step-num-3">3</div>
+                    <span>Assign &amp; Review</span>
+                </div>
+            </div>
+
+            <form method="post" action="/Manager/CreateTask" id="ct-form">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="departmentId" id="hf-deptId">
+                <input type="hidden" name="assignedUserId" id="hf-userId">
+
+                <!-- STEP 1: Department -->
+                <div class="ct-panel active" id="panel-1">
+                    <p class="ct-panel-title">Select a Department</p>
+                    <p class="ct-panel-sub">The task will be created under this department and only its members will appear in step 3.</p>
+                    <div class="form-group">
+                        <label>Department <span style="color:var(--danger)">*</span></label>
+                        <select id="dept-select" onchange="onDeptChange(this)">
+                            <option value="">— Choose a department —</option>
+                            @foreach (var d in (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Departments)
+                            {
+                                <option value="@d.Value">@d.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Task Details -->
+                <div class="ct-panel" id="panel-2">
+                    <p class="ct-panel-title">Task Details</p>
+                    <p class="ct-panel-sub">Give the task a clear title and an optional description.</p>
+                    <div class="form-group">
+                        <label>Title <span style="color:var(--danger)">*</span></label>
+                        <input type="text" name="title" id="task-title"
+                               placeholder="e.g. Prepare Q3 Report" maxlength="120">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" id="task-desc"
+                                  placeholder="Optional — describe what needs to be done…"></textarea>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Assign & Review -->
+                <div class="ct-panel" id="panel-3">
+                    <p class="ct-panel-title">Assign to a Team Member</p>
+                    <p class="ct-panel-sub">Choose an employee. Users at their 2-task limit cannot be selected.</p>
+
+                    <div class="emp-grid" id="emp-grid">
+                        <div class="emp-loading">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i> Loading employees…
+                        </div>
+                    </div>
+
+                    <div style="margin-top:28px;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid var(--border);">
+                        <p style="font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px;">Review</p>
+                        <div class="summary-row">
+                            <span class="summary-key">Department</span>
+                            <span class="summary-val" id="rv-dept">—</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-key">Title</span>
+                            <span class="summary-val" id="rv-title">—</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-key">Description</span>
+                            <span class="summary-val" id="rv-desc" style="font-weight:400;color:var(--muted);">—</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-key">Assigned to</span>
+                            <span class="summary-val" id="rv-user">— not selected —</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions bar -->
+                <div class="ct-actions">
+                    <button type="button" class="btn-back-step" id="btn-back"
+                            style="visibility:hidden;" onclick="prevStep()">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+
+                    <button type="button" class="btn-next" id="btn-next" onclick="nextStep()">
+                        Next <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+
+                    <button type="submit" class="btn-submit" id="btn-submit"
+                            style="display:none;" disabled>
+                        <i class="fa-solid fa-check"></i> Create &amp; Assign Task
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    let currentStep      = 1;
+    const totalSteps     = 3;
+    let selectedDeptId   = null;
+    let selectedDeptName = '';
+    let selectedUserId   = null;
+    let selectedUserName = '';
+    let employeesLoaded  = false;
+
+    function goToStep(step) {
+        for (let i = 1; i <= totalSteps; i++) {
+            document.getElementById(`panel-${i}`).classList.toggle('active', i === step);
+        }
+        for (let i = 1; i <= totalSteps; i++) {
+            const tab = document.getElementById(`step-tab-${i}`);
+            const num = document.getElementById(`step-num-${i}`);
+            tab.classList.remove('active', 'done');
+            if (i < step)  { tab.classList.add('done');   num.innerHTML = '<i class="fa-solid fa-check" style="font-size:.65rem"></i>'; }
+            if (i === step) { tab.classList.add('active'); num.textContent = i; }
+            if (i > step)  { num.textContent = i; }
+        }
+
+        document.getElementById('btn-back').style.visibility = step > 1 ? 'visible' : 'hidden';
+
+        const btnNext   = document.getElementById('btn-next');
+        const btnSubmit = document.getElementById('btn-submit');
+
+        if (step === totalSteps) {
+            btnNext.style.display   = 'none';
+            btnSubmit.style.display = 'flex';
+            updateReview();
+            loadEmployees();
+        } else {
+            btnNext.style.display   = 'flex';
+            btnSubmit.style.display = 'none';
+        }
+
+        currentStep = step;
+    }
+
+    function nextStep() {
+        if (!validateStep(currentStep)) return;
+        if (currentStep < totalSteps) goToStep(currentStep + 1);
+    }
+
+    function prevStep() {
+        if (currentStep > 1) goToStep(currentStep - 1);
+    }
+
+    function validateStep(step) {
+        if (step === 1) {
+            if (!selectedDeptId) {
+                flashError('dept-select', 'Please select a department.');
+                return false;
+            }
+        }
+        if (step === 2) {
+            const title = document.getElementById('task-title').value.trim();
+            if (!title) {
+                flashError('task-title', 'Task title is required.');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function flashError(inputId, msg) {
+        const el  = document.getElementById(inputId);
+        el.style.borderColor = 'var(--danger)';
+        el.focus();
+        const old = el.parentElement.querySelector('.field-error');
+        if (old) old.remove();
+        const tip = document.createElement('p');
+        tip.className = 'field-error';
+        tip.style.cssText = 'margin:5px 0 0;font-size:.78rem;color:var(--danger);';
+        tip.textContent = msg;
+        el.parentElement.appendChild(tip);
+        el.addEventListener('input', () => { el.style.borderColor = ''; tip.remove(); }, { once: true });
+    }
+
+    function onDeptChange(sel) {
+        selectedDeptId   = sel.value || null;
+        selectedDeptName = sel.options[sel.selectedIndex]?.text || '';
+        document.getElementById('hf-deptId').value = selectedDeptId ?? '';
+        employeesLoaded  = false;
+        selectedUserId   = null;
+        selectedUserName = '';
+    }
+
+    async function loadEmployees() {
+        if (employeesLoaded || !selectedDeptId) return;
+
+        const grid = document.getElementById('emp-grid');
+        grid.innerHTML = '<div class="emp-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading employees…</div>';
+
+        try {
+            const resp      = await fetch(`/Manager/GetEmployeesByDept?deptId=${selectedDeptId}`);
+            const employees = await resp.json();
+
+            if (!employees.length) {
+                grid.innerHTML = '<div class="emp-empty"><i class="fa-solid fa-user-slash" style="margin-right:6px;opacity:.4;"></i>No employees in this department.</div>';
+                return;
+            }
+
+            grid.innerHTML = employees.map(e => {
+                const isFull    = e.taskCount >= 2;
+                const roleClass = e.role === 'Manager' ? 'emp-role-manager' : 'emp-role-employee';
+                const cardClass = isFull ? 'emp-card full' : 'emp-card';
+                const clickAttr = isFull ? '' : `onclick="selectEmployee(${e.id}, '${escHtml(e.username)}', this)"`;
+                return `
+                    <div class="${cardClass}" id="emp-${e.id}" ${clickAttr}>
+                        <div class="emp-name">${escHtml(e.username)}</div>
+                        <span class="emp-role ${roleClass}">${e.role}</span>
+                        <div class="emp-tasks">${e.taskCount}/2 tasks assigned</div>
+                        ${isFull ? '<div class="emp-full-badge">⚠ Task limit reached</div>' : ''}
+                    </div>`;
+            }).join('');
+
+            employeesLoaded = true;
+        } catch (err) {
+            grid.innerHTML = '<div class="emp-empty" style="color:var(--danger);">Failed to load employees. Please go back and try again.</div>';
+            console.error(err);
+        }
+    }
+
+    function selectEmployee(id, name, el) {
+        document.querySelectorAll('.emp-card.selected').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedUserId   = id;
+        selectedUserName = name;
+        document.getElementById('hf-userId').value  = id;
+        document.getElementById('rv-user').textContent = name;
+        document.getElementById('btn-submit').disabled = false;
+    }
+
+    function updateReview() {
+        document.getElementById('rv-dept').textContent  = selectedDeptName || '—';
+        document.getElementById('rv-title').textContent = document.getElementById('task-title').value.trim() || '—';
+        const desc = document.getElementById('task-desc').value.trim();
+        document.getElementById('rv-desc').textContent  = desc || '(none)';
+        document.getElementById('rv-user').textContent  = selectedUserName || '— not selected —';
+    }
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+</script>

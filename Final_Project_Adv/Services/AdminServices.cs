@@ -155,5 +155,40 @@ namespace Final_Project_Adv.Services
 
             await auditService.LogAsync("Updated", "Department", dept.Id, oldDept, dept, performedById);
         }
+
+        public async Task<IEnumerable<TaskItemDto>> ViewAllTasksAsync()
+        {
+            return await context.TaskItem
+                .AsNoTracking() // Performance optimization for read-only
+                .Select(t => new TaskItemDto(
+                    t.Id,
+                    t.Title,
+                    t.Description,
+                    t.Status,
+                    t.CreatedById,
+                    t.DepartmentId,
+                    t.CreatedAt,
+                    t.UpdatedAt
+                ))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<TaskItemDto>> ViewAllTasksPerDeptAsync(int departmentId)
+        {
+            return await context.TaskItem
+                .AsNoTracking()
+                .Where(t => t.DepartmentId == departmentId)
+                .Select(t => new TaskItemDto(
+                    t.Id,
+                    t.Title,
+                    t.Description,
+                    t.Status,
+                    t.CreatedById,
+                    t.DepartmentId,
+                    t.CreatedAt,
+                    t.UpdatedAt
+                ))
+                .ToListAsync();
+        }
     }
 }
