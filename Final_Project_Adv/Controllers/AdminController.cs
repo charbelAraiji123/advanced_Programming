@@ -1,45 +1,62 @@
 ﻿using Final_Project_Adv.Domain.DTO;
 using Final_Project_Adv.Services;
 using Microsoft.AspNetCore.Mvc;
-using Final_Project_Adv.Models; // Added for UserRoles
+using Final_Project_Adv.Models;
+using System.Security.Claims;
 
 namespace Final_Project_Adv.Controllers
 {
     [Route("api/[controller]")]
-    public class AdminController(IAdminServices adminServices) : Controller
+    public class AdminController : Controller
     {
-        [HttpGet("Panel")]
-        //public IActionResult AdminPanel()
-        //{
-        //    var role = HttpContext.Session.GetString("UserRole");
+        private readonly IAdminServices _adminServices;
 
-        //    if (!string.Equals(role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        return RedirectToAction("Login", "Account");
-        //    }
+        public AdminController(IAdminServices adminServices)
+        {
+            _adminServices = adminServices;
+        }
 
-        //    return View();
-        //}
+        /// <summary>
+        /// Helper to extract the ID of the Admin performing the action.
+        /// Priority: 1. Claims (Auth) -> 2. Session -> 3. Default 0
+        /// </summary>
+        private int GetCurrentUserId()
+        {
+            // 1. Try to get ID from Identity Claims (Recommended)
+            var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(claimId, out int idFromClaim)) return idFromClaim;
+
+            // 2. Fallback to Session if Claims aren't populated
+            var sessionId = HttpContext.Session.GetString("UserId");
+            if (int.TryParse(sessionId, out int idFromSession)) return idFromSession;
+
+            return 0; // Action performed by unknown/system
+        }
+
         // --- User Management ---
 
         [HttpPost("Users/Create")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
         {
-            var result = await adminServices.CreateUserAsync(dto);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _adminServices.CreateUserAsync(dto, GetCurrentUserId());
             return Ok(result);
         }
 
         [HttpDelete("Users/Delete/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            await adminServices.DeleteUserAsync(id);
+            await _adminServices.DeleteUserAsync(id, GetCurrentUserId());
             return NoContent();
         }
 
         [HttpPut("Users/Update")]
         public async Task<IActionResult> UpdateUser([FromBody] UsersDto dto)
         {
-            await adminServices.UpdateUserAsync(dto);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            await _adminServices.UpdateUserAsync(dto, GetCurrentUserId());
             return Ok(new { message = "User updated successfully" });
         }
 
@@ -48,37 +65,39 @@ namespace Final_Project_Adv.Controllers
         [HttpPost("Departments/Create")]
         public async Task<IActionResult> CreateDept([FromBody] CreateDepartmentDto dto)
         {
-            var result = await adminServices.CreateDeptAsync(dto);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _adminServices.CreateDeptAsync(dto, GetCurrentUserId());
             return Ok(result);
         }
 
         [HttpDelete("Departments/Delete/{id}")]
         public async Task<IActionResult> DeleteDept(int id)
         {
-            await adminServices.DeleteDeptAsync(id);
+            await _adminServices.DeleteDeptAsync(id, GetCurrentUserId());
             return NoContent();
         }
 
-        // --- Permission Management (The Admin's control over Managers) ---
+        // --- Permission Management ---
 
         [HttpPost("Permissions/Grant")]
         public async Task<IActionResult> GrantPermission([FromBody] GrantPermissionDto dto)
         {
-            var result = await adminServices.GrantPermissionToUserAsync(dto);
+            var result = await _adminServices.GrantPermissionToUserAsync(dto);
             return Ok(result);
         }
 
         [HttpPost("Permissions/Revoke")]
         public async Task<IActionResult> RevokePermission([FromBody] RevokePermissionDto dto)
         {
-            var result = await adminServices.RevokePermissionFromUserAsync(dto);
+            var result = await _adminServices.RevokePermissionFromUserAsync(dto);
             return Ok(result);
         }
 
         [HttpGet("Permissions/{userId}")]
         public async Task<IActionResult> GetPermissions(int userId)
         {
-            var result = await adminServices.GetUserPermissionsAsync(userId);
+            var result = await _adminServices.GetUserPermissionsAsync(userId);
             return Ok(result);
         }
     }

@@ -11,77 +11,227 @@
     var postedDept = (string)(ViewBag.PostedDept ?? "");
 }
 
-<div class="container mt-4" style="max-width: 500px;">
-    <h2>Update User</h2>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    @if (hasErrors)
-    {
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    <li>@err.ErrorMessage</li>
-                }
-            </ul>
-        </div>
+<style>
+    :root {
+        --update-amber: #f59e0b;
+        --update-hover: #d97706;
+        --bg-slate: #f8fafc;
+        --border-slate: #e2e8f0;
+        --text-slate: #1e293b;
     }
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
+    body {
+        background-color: var(--bg-slate);
+        font-family: 'Inter', sans-serif;
+        color: var(--text-slate);
     }
 
-    <div class="mb-3">
-        <label class="form-label">User ID</label>
-        <div class="input-group">
-            <input type="number" id="searchId" class="form-control" placeholder="Enter User ID" min="1" />
-            <button class="btn btn-outline-secondary" onclick="searchUser()" id="btnSearch">Search</button>
+    .update-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid var(--border-slate);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        margin-top: 50px;
+        transition: all 0.3s ease;
+    }
+
+        .update-card h2 {
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+    /* Search Section Styling */
+    .search-box {
+        background: #fffbeb; /* Light amber bg */
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #fef3c7;
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 1px solid var(--border-slate);
+        transition: all 0.2s;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--update-amber);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        }
+
+    /* Primary Buttons */
+    .btn-update {
+        background-color: var(--update-amber);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+
+        .btn-update:hover {
+            background-color: var(--update-hover);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+    .btn-cancel {
+        background-color: transparent;
+        color: #64748b;
+        border: 1px solid var(--border-slate);
+        font-weight: 500;
+        padding: 12px;
+        border-radius: 10px;
+    }
+
+        .btn-cancel:hover {
+            background-color: #f1f5f9;
+            color: var(--text-slate);
+        }
+
+    /* Animations */
+    #editForm {
+        animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        border-top: 2px solid var(--bg-slate);
+        padding-top: 25px;
+    }
+
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Input Group Styling */
+    .input-group .btn-outline-secondary {
+        border-color: var(--border-slate);
+        background: white;
+        color: var(--text-slate);
+    }
+
+        .input-group .btn-outline-secondary:hover {
+            background: #f1f5f9;
+        }
+</style>
+
+<div class="container" style="max-width: 550px;">
+    <div class="update-card">
+        <h2><i class="fa-solid fa-user-pen text-warning"></i> Update User</h2>
+
+        <!-- Alert System -->
+        @if (hasErrors)
+        {
+            <div class="alert alert-danger border-0 shadow-sm">
+                <ul class="mb-0 small fw-medium">
+                    @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <li><i class="fa-solid fa-circle-exclamation me-1"></i> @err.ErrorMessage</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success border-0 shadow-sm fw-medium">
+                <i class="fa-solid fa-circle-check me-1"></i> @TempData["Success"]
+            </div>
+        }
+
+        <!-- Search Logic Area -->
+        <div class="search-box">
+            <label class="form-label">Lookup User by ID</label>
+            <div class="input-group">
+                <input type="number" id="searchId" class="form-control" placeholder="Enter ID..." min="1" />
+                <button class="btn btn-outline-secondary px-4" onclick="searchUser()" id="btnSearch">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+            <small id="searchFeedback" class="form-text mt-2 d-block"></small>
         </div>
-        <small id="searchFeedback" class="form-text"></small>
+
+        <!-- The Hidden Form -->
+        <form method="post" action="/Admin/UpdateUser" id="editForm" style="display:none;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="hiddenId" />
+
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" name="Username" id="fUsername" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="email" name="Email" id="fEmail" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Department</label>
+                    <select name="DepartmentId" id="fDept" class="form-select">
+                        <option value="">Select Dept</option>
+                        @foreach (var dept in departments)
+                        {
+                            <option value="@dept.Value">@dept.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <label class="form-label">System Role</label>
+                    <select name="Role" id="fRole" class="form-select">
+                        <option value="">Select Role</option>
+                        <option value="Employee">Employee</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-update">
+                    <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
+                </button>
+                <a asp-action="UserManagement" asp-controller="AdminView" class="btn btn-cancel">
+                    Cancel
+                </a>
+            </div>
+        </form>
     </div>
-
-    <hr />
-
-    <form method="post" action="/Admin/UpdateUser" id="editForm" style="display:none;">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="Id" id="hiddenId" />
-
-        <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="Username" id="fUsername" class="form-control" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="Email" id="fEmail" class="form-control" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Department</label>
-            <select name="DepartmentId" id="fDept" class="form-select">
-                <option value="">-- Select Department --</option>
-                @foreach (var dept in departments)
-                {
-                    <option value="@dept.Value">@dept.Text</option>
-                }
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Role</label>
-            <select name="Role" id="fRole" class="form-select">
-                <option value="">-- Select Role --</option>
-                <option value="Employee">Employee</option>
-                <option value="Manager">Manager</option>
-                <option value="Admin">Admin</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-warning">Save Changes</button>
-        <a asp-action="UserManagement" asp-controller="AdminView" class="btn btn-secondary ms-2">Cancel</a>
-    </form>
 </div>
 
+<!-- JavaScript Logic Helpers -->
 <span id="srv-errors" style="display:none">@(hasErrors ? "1" : "0")</span>
 <span id="srv-id" style="display:none">@postedId</span>
 <span id="srv-user" style="display:none">@postedUser</span>
@@ -90,6 +240,9 @@
 <span id="srv-dept" style="display:none">@postedDept</span>
 
 <script>
+    // Note: Keeping your existing searchUser and populateForm JS logic
+    // as it is already well-structured for functional requirements.
+
     async function searchUser() {
         var id = document.getElementById('searchId').value.trim();
         var feedback = document.getElementById('searchFeedback');
@@ -102,7 +255,7 @@
         }
 
         document.getElementById('btnSearch').disabled = true;
-        feedback.textContent = 'Searching...';
+        feedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Searching...';
         feedback.className = 'form-text text-muted';
         editForm.style.display = 'none';
 
@@ -112,8 +265,8 @@
             if (resp.ok) {
                 var user = await resp.json();
                 populateForm(user.id, user.username, user.email, user.role, user.departmentId);
-                feedback.textContent = 'User "' + user.username + '" found.';
-                feedback.className = 'form-text text-success';
+                feedback.innerHTML = '<i class="fa-solid fa-check me-1"></i> User "' + user.username + '" found.';
+                feedback.className = 'form-text text-success fw-medium';
                 editForm.style.display = 'block';
             } else {
                 var data = await resp.json().catch(function () { return {}; });

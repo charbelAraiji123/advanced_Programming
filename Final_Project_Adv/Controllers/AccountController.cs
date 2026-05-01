@@ -1,8 +1,6 @@
 ﻿using Final_Project_Adv.Models;
 using Final_Project_Adv.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Final_Project_Adv.Controllers
 {
@@ -27,22 +25,19 @@ namespace Final_Project_Adv.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var user = await _managerServices.GetUserByEmailAsync(model.Email);
-
             if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
             {
                 ModelState.AddModelError(string.Empty, "Invalid email or password.");
                 return View(model);
             }
 
-            // Set Session
+            // ✅ FIX: Store UserId in session — required for audit logging
+            HttpContext.Session.SetString("UserId", user.Id.ToString());
             HttpContext.Session.SetString("UserRole", user.Role);
             HttpContext.Session.SetString("UserName", user.Username);
 
-            // Redirect based on role
             if (string.Equals(user.Role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
-            {
-                return RedirectToAction("AdminPanel", "AdminView"); // Points to AdminViewController
-            }
+                return RedirectToAction("AdminPanel", "AdminView");
 
             return RedirectToAction("Index", "Home");
         }

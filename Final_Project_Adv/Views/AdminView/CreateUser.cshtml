@@ -1,58 +1,197 @@
 ﻿@using Final_Project_Adv.Models
 @model Final_Project_Adv.Domain.DTO.CreateUserDto
 
-<div class="container mt-4" style="max-width: 500px;">
-    <h2>Create New User</h2>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
+<style>
+    :root {
+        --create-indigo: #4f46e5;
+        --create-hover: #4338ca;
+        --bg-slate: #f8fafc;
+        --border-slate: #e2e8f0;
+        --text-slate: #1e293b;
     }
 
-    <form action="/Admin/CreateUser" method="post">
-        @Html.AntiForgeryToken()
+    body {
+        background-color: var(--bg-slate);
+        font-family: 'Inter', sans-serif;
+        color: var(--text-slate);
+    }
 
-        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    .create-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid var(--border-slate);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        margin-top: 50px;
+    }
 
-        <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="Username" class="form-control" />
-        </div>
+        .create-card h2 {
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 30px;
+            color: var(--text-slate);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-        <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="Email" class="form-control" />
-        </div>
+    .form-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #475569;
+        margin-bottom: 8px;
+    }
 
-        <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" name="Password" class="form-control" />
-        </div>
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 1px solid var(--border-slate);
+        transition: all 0.2s;
+    }
 
-        <div class="mb-3">
-            <label class="form-label">Department</label>
-            <select name="DepartmentId" class="form-select">
-                <option value="">-- Select Department --</option>
-                @foreach (Microsoft.AspNetCore.Mvc.Rendering.SelectListItem item in ViewBag.Departments)
-                {
-                    <option value="@item.Value">@item.Text</option>
-                }
-            </select>
-        </div>
+        .form-control:focus, .form-select:focus {
+            border-color: var(--create-indigo);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
 
-        <div class="mb-3">
-            <label class="form-label">Role</label>
-            <select name="Role" class="form-select">
-                <option value="">-- Select Role --</option>
-                <option value="Employee">Employee</option>
-                <option value="Manager">Manager</option>
-                <option value="Admin">Admin</option>
-            </select>
-        </div>
+    /* Icon Input Styling */
+    .input-group-text {
+        background-color: #f1f5f9;
+        border: 1px solid var(--border-slate);
+        border-radius: 10px 0 0 10px;
+        color: #94a3b8;
+    }
 
-        <button type="submit" class="btn btn-primary">Create User</button>
-        <a asp-action="UserManagement" class="btn btn-secondary ms-2">Cancel</a>
-    </form>
+    .form-control-with-icon {
+        border-radius: 0 10px 10px 0 !important;
+    }
+
+    /* Buttons */
+    .btn-create {
+        background-color: var(--create-indigo);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+
+        .btn-create:hover {
+            background-color: var(--create-hover);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+    .btn-cancel {
+        background-color: white;
+        color: #64748b;
+        border: 1px solid var(--border-slate);
+        font-weight: 500;
+        padding: 12px;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+
+        .btn-cancel:hover {
+            background-color: #f1f5f9;
+            color: var(--text-slate);
+        }
+
+    /* Validation Summary Customization */
+    .validation-summary-errors {
+        background-color: #fff1f2;
+        border: 1px solid #fecdd3;
+        border-radius: 10px;
+        padding: 15px;
+        color: #be123c;
+        font-size: 0.9rem;
+    }
+
+        .validation-summary-errors ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+</style>
+
+<div class="container" style="max-width: 550px;">
+    <div class="create-card">
+        <h2><i class="fa-solid fa-user-plus text-primary"></i> Create New User</h2>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success border-0 shadow-sm fw-medium mb-4">
+                <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+            </div>
+        }
+
+        <form action="/Admin/CreateUser" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="All" class="mb-4"></div>
+
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-id-badge"></i></span>
+                    <input type="text" name="Username" class="form-control form-control-with-icon" placeholder="johndoe" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="email" name="Email" class="form-control form-control-with-icon" placeholder="name@company.com" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Temporary Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" name="Password" class="form-control form-control-with-icon" placeholder="••••••••" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Department</label>
+                    <select name="DepartmentId" class="form-select">
+                        <option value="">Select Dept</option>
+                        @foreach (Microsoft.AspNetCore.Mvc.Rendering.SelectListItem item in ViewBag.Departments)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <label class="form-label">Role</label>
+                    <select name="Role" class="form-select">
+                        <option value="">Select Role</option>
+                        <option value="Employee">Employee</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-create">
+                    <i class="fa-solid fa-check-circle me-2"></i> Create User Account
+                </button>
+                <a asp-action="UserManagement" class="btn btn-cancel">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 
 @section Scripts {

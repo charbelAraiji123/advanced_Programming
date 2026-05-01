@@ -13,17 +13,25 @@ namespace Final_Project_Adv.Controllers
     {
         private readonly IAdminServices _adminServices;
         private readonly AppDbContext _context;
+        private readonly AuditService _auditService;
 
-        public AdminViewController(IAdminServices adminServices, AppDbContext context)
+        public AdminViewController(IAdminServices adminServices, AppDbContext context, AuditService auditService)
         {
             _adminServices = adminServices;
             _context = context;
+            _auditService = auditService;
         }
 
         private bool IsAdmin()
         {
             var role = HttpContext.Session.GetString("UserRole");
             return string.Equals(role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private int GetAdminId()
+        {
+            var idStr = HttpContext.Session.GetString("UserId");
+            return int.TryParse(idStr, out int id) ? id : 0;
         }
 
         private async Task LoadDepartmentsAsync()
@@ -55,6 +63,73 @@ namespace Final_Project_Adv.Controllers
         {
             if (!IsAdmin()) return RedirectToAction("Login", "Account");
             return View();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // AUDIT LOGS
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet("AuditLogs")]
+        public async Task<IActionResult> AuditLogs(
+            string? search,
+            string? filterAction,
+            string? filterEntity,
+            int page = 1)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+
+            const int pageSize = 20;
+
+            var query = _context.AuditLog
+                .Include(a => a.PerformedBy)
+                .AsQueryable();
+
+            // Filters
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(a =>
+                    a.EntityType.Contains(search) ||
+                    a.Action.Contains(search) ||
+                    a.PerformedBy.Username.Contains(search));
+
+            if (!string.IsNullOrWhiteSpace(filterAction))
+                query = query.Where(a => a.Action == filterAction);
+
+            if (!string.IsNullOrWhiteSpace(filterEntity))
+                query = query.Where(a => a.EntityType == filterEntity);
+
+            var totalCount = await query.CountAsync();
+
+            var logs = await query
+                .OrderByDescending(a => a.PerformedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new AuditLogDto
+                {
+                    Id = a.Id,
+                    Action = a.Action,
+                    EntityType = a.EntityType,
+                    EntityId = a.EntityId,
+                    OldValue = a.OldValue,
+                    NewValue = a.NewValue,
+                    PerformedById = a.PerformedById,
+                    PerformedBy = a.PerformedBy.Username,
+                    PerformedAt = a.PerformedAt
+                })
+                .ToListAsync();
+
+            // Distinct values for filter dropdowns
+            ViewBag.Actions = await _context.AuditLog.Select(a => a.Action).Distinct().ToListAsync();
+            ViewBag.Entities = await _context.AuditLog.Select(a => a.EntityType).Distinct().ToListAsync();
+
+            // Pagination info
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            ViewBag.TotalCount = totalCount;
+            ViewBag.Search = search;
+            ViewBag.FilterAction = filterAction;
+            ViewBag.FilterEntity = filterEntity;
+
+            return View(logs);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -97,36 +172,16 @@ namespace Final_Project_Adv.Controllers
 
             try
             {
-                var userExists = await _context.Users.AnyAsync(u => u.Username == username);
-                if (userExists)
-                {
-                    ModelState.AddModelError("", "Username is already taken.");
-                    await LoadDepartmentsAsync();
-                    return View("CreateUser", new CreateUserDto());
-                }
-
-                var deptExists = await _context.Department.AnyAsync(d => d.Id == deptId);
-                if (!deptExists)
-                {
-                    ModelState.AddModelError("", "Selected department does not exist.");
-                    await LoadDepartmentsAsync();
-                    return View("CreateUser", new CreateUserDto());
-                }
-
-                var user = new Users
+                var dto = new CreateUserDto
                 {
                     Username = username,
-                    Password = BCrypt.Net.BCrypt.HashPassword(password),
                     Email = email,
+                    Password = password,
                     Role = role,
-                    DepartmentId = deptId,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    DepartmentId = deptId
                 };
 
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-
+                await _adminServices.CreateUserAsync(dto, GetAdminId());
                 TempData["Success"] = $"User '{username}' created successfully.";
                 return RedirectToAction("UserManagement");
             }
@@ -142,13 +197,9 @@ namespace Final_Project_Adv.Controllers
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // UPDATE USER  (GET user by ID via AJAX, POST to save)
+        // UPDATE USER
         // ─────────────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// AJAX endpoint — returns user JSON so the view can populate the form.
-        /// GET /Admin/GetUser?id=5
-        /// </summary>
         [HttpGet("GetUser")]
         public async Task<IActionResult> GetUser(int id)
         {
@@ -159,14 +210,7 @@ namespace Final_Project_Adv.Controllers
 
             var user = await _context.Users
                 .Where(u => u.Id == id)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.Username,
-                    u.Email,
-                    u.Role,
-                    u.DepartmentId
-                })
+                .Select(u => new { u.Id, u.Username, u.Email, u.Role, u.DepartmentId })
                 .FirstOrDefaultAsync();
 
             if (user == null)
@@ -175,10 +219,6 @@ namespace Final_Project_Adv.Controllers
             return Ok(user);
         }
 
-        /// <summary>
-        /// Shows the Update User page.
-        /// GET /Admin/UpdateUser
-        /// </summary>
         [HttpGet("UpdateUser")]
         public async Task<IActionResult> UpdateUser()
         {
@@ -187,10 +227,6 @@ namespace Final_Project_Adv.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Processes the update form and delegates to AdminServices.UpdateUserAsync.
-        /// POST /Admin/UpdateUser
-        /// </summary>
         [HttpPost("UpdateUser")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateUserPost()
@@ -203,7 +239,6 @@ namespace Final_Project_Adv.Controllers
             var role = Request.Form["Role"].ToString();
             var deptIdStr = Request.Form["DepartmentId"].ToString();
 
-            // Helper to return view with posted values preserved
             IActionResult ReturnWithErrors()
             {
                 ViewBag.HasFormErrors = true;
@@ -277,7 +312,7 @@ namespace Final_Project_Adv.Controllers
                     Email = email,
                     Role = role,
                     DepartmentId = deptId
-                });
+                }, GetAdminId());
 
                 TempData["Success"] = $"User '{username}' updated successfully.";
                 return RedirectToAction("UserManagement");
@@ -294,7 +329,37 @@ namespace Final_Project_Adv.Controllers
         // ─────────────────────────────────────────────────────────────────────
 
         [HttpGet("DeleteManagement")]
-        public IActionResult DeleteUser() => View();
+        public IActionResult DeleteUser()
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+            return View();
+        }
+
+        [HttpPost("DeleteUser")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUserPost()
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+
+            var idStr = Request.Form["Id"].ToString();
+
+            if (!int.TryParse(idStr, out int userId) || userId <= 0)
+            {
+                TempData["Error"] = "Invalid user ID.";
+                return RedirectToAction("DeleteUser");
+            }
+
+            var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
+            if (!userExists)
+            {
+                TempData["Error"] = $"User with ID {userId} does not exist.";
+                return RedirectToAction("DeleteUser");
+            }
+
+            await _adminServices.DeleteUserAsync(userId, GetAdminId());
+            TempData["Success"] = $"User with ID {userId} deleted successfully.";
+            return RedirectToAction("UserManagement");
+        }
 
         // ─────────────────────────────────────────────────────────────────────
         // DEBUG / TEST HELPERS (remove before production)

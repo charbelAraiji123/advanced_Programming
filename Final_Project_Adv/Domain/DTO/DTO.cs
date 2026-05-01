@@ -34,6 +34,19 @@ public class CreateUserDto  // ← changed from 'record' to 'class'
     public int? DepartmentId { get; set; }
 }
 
+public class AuditLogDto
+{
+    public int Id { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string EntityType { get; set; } = string.Empty;
+    public int EntityId { get; set; }
+    public string? OldValue { get; set; }
+    public string? NewValue { get; set; }
+    public int PerformedById { get; set; }
+    public string PerformedBy { get; set; } = string.Empty;
+    public DateTime PerformedAt { get; set; }
+}
+
 public record UpdateUserDto(
     string Username,
     string Password,
