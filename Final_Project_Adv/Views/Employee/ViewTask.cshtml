@@ -9,7 +9,6 @@
 
 @section Styles {
     <style>
-        /* SHELL & BACKGROUND */
         .task-shell {
             background: #f4f6f9;
             min-height: 100vh;
@@ -17,7 +16,6 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* HEADER SECTION */
         .task-page-header {
             background: white;
             padding: 2rem 0;
@@ -44,7 +42,6 @@
             margin-top: 5px;
         }
 
-        /* TABLE CARD */
         .task-card {
             background: #ffffff;
             border-radius: 12px;
@@ -70,7 +67,6 @@
             color: #4e4e4e;
         }
 
-        /* STATUS BADGES */
         .badge-status {
             padding: 0.5em 0.8em;
             border-radius: 6px;
@@ -78,11 +74,21 @@
             font-size: 0.8rem;
         }
 
-        .bg-pending { background-color: #fff4e5; color: #ff9800; }
-        .bg-progress { background-color: #e8f0fe; color: #1a73e8; }
-        .bg-complete { background-color: #e6f4ea; color: #1e8e3e; }
+        .bg-pending {
+            background-color: #fff4e5;
+            color: #ff9800;
+        }
 
-        /* BUTTONS */
+        .bg-progress {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .bg-complete {
+            background-color: #e6f4ea;
+            color: #1e8e3e;
+        }
+
         .btn-accept {
             background-color: #6c63ff;
             border: none;
@@ -92,14 +98,254 @@
             transition: all 0.2s;
         }
 
-        .btn-accept:hover {
-            background-color: #574fd6;
-            transform: translateY(-1px);
+            .btn-accept:hover {
+                background-color: #574fd6;
+                transform: translateY(-1px);
+            }
+
+        /* ── Add Subtask button ── */
+        .btn-add-subtask {
+            background-color: #fff;
+            border: 1.5px solid #6c63ff;
+            color: #6c63ff;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.18s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+            .btn-add-subtask:hover {
+                background-color: #6c63ff;
+                color: #fff;
+                transform: translateY(-1px);
+            }
+
+        .action-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Modal overlay ── */
+        .subtask-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1050;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+            .subtask-modal-overlay.active {
+                display: flex;
+            }
+
+        /* ── Modal box ── */
+        .subtask-modal {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalSlideIn 0.22s ease;
+        }
+
+        @@keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .modal-header-custom {
+            background: linear-gradient(135deg, #6c63ff 0%, #4e73df 100%);
+            padding: 1.4rem 1.6rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+            .modal-header-custom h5 {
+                color: #fff;
+                font-weight: 700;
+                font-size: 1.1rem;
+                margin: 0;
+            }
+
+            .modal-header-custom p {
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.82rem;
+                margin: 3px 0 0;
+            }
+
+        .modal-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+            .modal-close-btn:hover {
+                background: rgba(255, 255, 255, 0.35);
+            }
+
+        .modal-body-custom {
+            padding: 1.5rem 1.6rem;
+        }
+
+        .form-label-custom {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #4e4e6a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-control-custom,
+        .form-select-custom {
+            width: 100%;
+            padding: 0.55rem 0.85rem;
+            border: 1.5px solid #e3e6f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #1e1e2d;
+            background: #fafbff;
+            transition: border-color 0.18s, box-shadow 0.18s;
+            outline: none;
+            font-family: inherit;
+        }
+
+            .form-control-custom:focus,
+            .form-select-custom:focus {
+                border-color: #6c63ff;
+                box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+                background: #fff;
+            }
+
+        textarea.form-control-custom {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .modal-footer-custom {
+            padding: 1rem 1.6rem 1.4rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #e3e6f0;
+        }
+
+        .btn-cancel-modal {
+            background: #fff;
+            border: 1.5px solid #e3e6f0;
+            color: #888;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            font-size: 0.88rem;
+        }
+
+            .btn-cancel-modal:hover {
+                border-color: #bbb;
+                color: #555;
+            }
+
+        .btn-submit-subtask {
+            background: linear-gradient(135deg, #6c63ff 0%, #4e73df 100%);
+            border: none;
+            color: #fff;
+            padding: 0.5rem 1.4rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.15s;
+            font-family: inherit;
+            font-size: 0.88rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+            .btn-submit-subtask:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+
+            .btn-submit-subtask:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .assign-hint {
+            font-size: 0.78rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .form-group-modal {
+            margin-bottom: 1.1rem;
+        }
+
+        /* spinner */
+        .spinner-sm {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: none;
+        }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-employees {
+            font-size: 0.82rem;
+            color: #aaa;
+            padding: 6px 0;
         }
     </style>
 }
 
 <div class="task-shell">
+
     <!-- PAGE HEADER -->
     <div class="task-page-header">
         <div class="container header-container">
@@ -114,6 +360,7 @@
     </div>
 
     <div class="container">
+
         <!-- ALERTS -->
         @if (TempData["Success"] != null)
         {
@@ -123,7 +370,15 @@
             </div>
         }
 
-        <!-- MAIN CONTENT -->
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-2"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- MAIN TABLE -->
         <div class="task-card">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
@@ -164,37 +419,48 @@
                                     <td class="fw-bold text-muted">#@task.Id</td>
                                     <td>
                                         <div class="fw-bold text-dark">@task.Title</div>
-                                        <small class="text-muted">@(string.IsNullOrWhiteSpace(task.Description) ? "No description provided." : task.Description)</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge-status @badgeClass">@label</span>
-                                    </td>
-                                    <td class="text-muted small">
-                                        @task.CreatedAt.ToString("MMM dd, yyyy")
-                                    </td>
-                                    <td class="text-center">
-                                        @if (statusStr == "Pending")
-                                        {
-                                            <form method="post" action="/Employee/AcceptTask">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="TaskId" value="@task.Id" />
-                                                <button type="submit" class="btn btn-sm btn-accept shadow-sm">
-                                                    Accept Task
+                                        <small class="text-muted">
+                                            @(string.IsNullOrWhiteSpace(task.Description)
+                                                                                ? "No description provided."
+                                                                                : task.Description)
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge-status @badgeClass">@label</span>
+                            </td>
+                            <td class="text-muted small">
+                                @task.CreatedAt.ToString("MMM dd, yyyy")
+                            </td>
+                            <td class="text-center">
+                                <div class="action-cell">
+                                    @if (statusStr == "Pending")
+                                            {
+                                                <form method="post" action="/Employee/AcceptTask">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="TaskId" value="@task.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-accept shadow-sm">
+                                                        Accept Task
+                                                    </button>
+                                                </form>
+                                            }
+                                            else if (statusStr == "InProgress")
+                                            {
+                                                <span class="text-primary small fw-bold">
+                                                    <i class="bi bi-play-circle-fill me-1"></i> Active
+                                                </span>
+
+                                                <button class="btn-add-subtask"
+                                                        onclick="openSubtaskModal(@task.Id, @task.DepartmentId, '@Html.Raw(task.Title.Replace("'", "\\'"))')">
+                                                    <i class="bi bi-plus-circle"></i> Add Subtask
                                                 </button>
-                                            </form>
-                                        }
-                                        else if (statusStr == "InProgress")
-                                        {
-                                            <span class="text-primary small fw-bold">
-                                                <i class="bi bi-play-circle-fill me-1"></i> Active
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-success small fw-bold">
-                                                <i class="bi bi-check-all me-1"></i> Finalized
-                                            </span>
-                                        }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-success small fw-bold">
+                                                    <i class="bi bi-check-all me-1"></i> Finalized
+                                                </span>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -203,5 +469,175 @@
                 </table>
             </div>
         </div>
+
     </div>
 </div>
+
+<!-- ── Add Subtask Modal ── -->
+<div class="subtask-modal-overlay" id="subtaskModalOverlay" onclick="handleOverlayClick(event)">
+    <div class="subtask-modal" role="dialog" aria-modal="true" aria-labelledby="subtaskModalTitle">
+
+        <div class="modal-header-custom">
+            <div>
+                <h5 id="subtaskModalTitle">Add Subtask</h5>
+                <p id="subtaskModalTaskName">Task: —</p>
+            </div>
+            <button class="modal-close-btn" onclick="closeSubtaskModal()" aria-label="Close">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <form method="post" action="/Employee/CreateSubtask" id="subtaskForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="TaskItemId" id="modalTaskItemId" />
+            <input type="hidden" name="DepartmentId" id="modalDepartmentId" />
+
+            <div class="modal-body-custom">
+
+                <div class="form-group-modal">
+                    <label class="form-label-custom" for="subtaskTitle">
+                        Title <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           id="subtaskTitle"
+                           name="Title"
+                           class="form-control-custom"
+                           placeholder="e.g. Write unit tests for login module"
+                           maxlength="200"
+                           required />
+                </div>
+
+                <div class="form-group-modal">
+                    <label class="form-label-custom" for="subtaskDesc">Description</label>
+                    <textarea id="subtaskDesc"
+                              name="Description"
+                              class="form-control-custom"
+                              placeholder="Optional — describe what needs to be done…"
+                              maxlength="2000"></textarea>
+                </div>
+
+                <div class="form-group-modal">
+                    <label class="form-label-custom" for="assigneeSelect">Assign To (optional)</label>
+                    <div id="employeeLoadingMsg" class="loading-employees">
+                        <i class="bi bi-arrow-repeat"></i> Loading team members…
+                    </div>
+                    <select id="assigneeSelect"
+                            name="AssignedToId"
+                            class="form-select-custom"
+                            style="display:none;">
+                        <option value="">— Leave unassigned —</option>
+                    </select>
+                    <p class="assign-hint">
+                        Only employees and managers in the same department are shown.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="modal-footer-custom">
+                <button type="button" class="btn-cancel-modal" onclick="closeSubtaskModal()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-submit-subtask" id="submitSubtaskBtn">
+                    <span class="spinner-sm" id="submitSpinner"></span>
+                    <i class="bi bi-plus-lg" id="submitIcon"></i>
+                    Create Subtask
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Open modal ────────────────────────────────────────────────────────
+        async function openSubtaskModal(taskId, deptId, taskTitle) {
+            document.getElementById('modalTaskItemId').value   = taskId;
+            document.getElementById('modalDepartmentId').value = deptId;
+            document.getElementById('subtaskModalTaskName').textContent = 'Task: ' + taskTitle;
+
+            // Reset fields
+            document.getElementById('subtaskTitle').value = '';
+            document.getElementById('subtaskDesc').value  = '';
+
+            // Reset submit button state
+            document.getElementById('submitSubtaskBtn').disabled     = false;
+            document.getElementById('submitSpinner').style.display   = 'none';
+            document.getElementById('submitIcon').style.display      = 'inline';
+
+            // Show overlay
+            document.getElementById('subtaskModalOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Auto-focus title
+            setTimeout(function () {
+                document.getElementById('subtaskTitle').focus();
+            }, 80);
+
+            // Fetch employees for this department
+            await loadDepartmentEmployees(deptId);
+        }
+
+        // ── Close modal ───────────────────────────────────────────────────────
+        function closeSubtaskModal() {
+            document.getElementById('subtaskModalOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('subtaskModalOverlay')) {
+                closeSubtaskModal();
+            }
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeSubtaskModal();
+        });
+
+        // ── Load same-department employees via AJAX ───────────────────────────
+        async function loadDepartmentEmployees(deptId) {
+            var loading = document.getElementById('employeeLoadingMsg');
+            var select  = document.getElementById('assigneeSelect');
+
+            loading.innerHTML     = '<i class="bi bi-arrow-repeat"></i> Loading team members…';
+            loading.style.display = 'block';
+            select.style.display  = 'none';
+
+            try {
+                var resp = await fetch('/Manager/GetEmployeesByDept?deptId=' + deptId);
+                if (!resp.ok) throw new Error('Request failed with status ' + resp.status);
+
+                var employees = await resp.json();
+
+                // Rebuild the dropdown
+                select.innerHTML = '<option value="">— Leave unassigned —</option>';
+                employees.forEach(function (emp) {
+                    var opt       = document.createElement('option');
+                    opt.value       = emp.id;
+                    opt.textContent = emp.username + ' (' + emp.role + ')';
+                    select.appendChild(opt);
+                });
+
+                loading.style.display = 'none';
+                select.style.display  = 'block';
+            } catch (err) {
+                loading.innerHTML =
+                    '<span class="text-danger">'
+                    + '<i class="bi bi-exclamation-circle"></i> Could not load team members.'
+                    + '</span>';
+            }
+        }
+
+        // ── Show loading spinner on submit ────────────────────────────────────
+        document.getElementById('subtaskForm').addEventListener('submit', function () {
+            var btn     = document.getElementById('submitSubtaskBtn');
+            var spinner = document.getElementById('submitSpinner');
+            var icon    = document.getElementById('submitIcon');
+
+            btn.disabled          = true;
+            spinner.style.display = 'inline-block';
+            icon.style.display    = 'none';
+        });
+    </script>
+}

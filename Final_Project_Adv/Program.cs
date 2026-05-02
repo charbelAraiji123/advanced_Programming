@@ -24,6 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<PermissionService>();
 builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<ProgressService>();  // ← add this line
 builder.Services.AddSingleton<JwtService>();
 
 builder.Services.AddScoped<IAdminServices, AdminServices>();
