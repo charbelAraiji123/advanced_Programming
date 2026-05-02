@@ -1,13 +1,15 @@
 ﻿using Final_Project_Adv.Domain.DTO;
 using Final_Project_Adv.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Final_Project_Adv.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Employee")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Employee")]
     public class EmployeeApiController : ControllerBase
     {
         private readonly IEmployeeServices _employeeServices;
@@ -17,73 +19,117 @@ namespace Final_Project_Adv.Controllers
             _employeeServices = employeeServices;
         }
 
-        // ================= TASKS =================
-
-        [HttpGet("MyTasks/{userId}")]
-        public async Task<IActionResult> GetMyTasks(int userId)
+        private int GetCurrentUserId()
         {
-            var tasks = await _employeeServices.GetMyTasksAsync(userId);
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(claim, out int id) ? id : 0;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // READ
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet("tasks/mine")]
+        public async Task<IActionResult> GetMyTasks()
+        {
+            var tasks = await _employeeServices.GetMyTasksAsync(GetCurrentUserId());
             return Ok(tasks);
         }
 
-        [HttpGet("MySubtasks/{userId}")]
-        public async Task<IActionResult> GetMySubtasks(int userId)
+        [HttpGet("subtasks/mine")]
+        public async Task<IActionResult> GetMySubtasks()
         {
-            var subtasks = await _employeeServices.GetMySubtasksAsync(userId);
+            var subtasks = await _employeeServices.GetMySubtasksAsync(GetCurrentUserId());
             return Ok(subtasks);
         }
 
-        // ================= SUBMIT =================
+        // ─────────────────────────────────────────────────────────────────────
+        // ACCEPT / SUBMIT
+        // ─────────────────────────────────────────────────────────────────────
 
-        [HttpPut("SubmitTask/{taskId}")]
+        /// <summary>Moves task from Pending → InProgress.</summary>
+        [HttpPut("tasks/accept/{taskId}")]
+        public async Task<IActionResult> AcceptTask(int taskId)
+        {
+            try
+            {
+                var result = await _employeeServices.AcceptTaskAsync(taskId);
+                if (!result) return NotFound(new { message = "Task not found." });
+                return Ok(new { message = "Task accepted and set to InProgress." });
+            }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
+        /// <summary>Moves task from InProgress → Completed.</summary>
+        [HttpPut("tasks/submit/{taskId}")]
         public async Task<IActionResult> SubmitTask(int taskId)
         {
-            var result = await _employeeServices.SubmitTaskAsync(taskId);
-
-            if (!result)
-                return NotFound(new { message = "Task not found" });
-
-            return Ok(new { message = "Task submitted successfully" });
+            try
+            {
+                var result = await _employeeServices.SubmitTaskAsync(taskId);
+                if (!result) return NotFound(new { message = "Task not found." });
+                return Ok(new { message = "Task submitted successfully." });
+            }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
         }
 
-        [HttpPut("SubmitSubtask/{subtaskId}")]
+        /// <summary>Moves subtask → Completed.</summary>
+        [HttpPut("subtasks/submit/{subtaskId}")]
         public async Task<IActionResult> SubmitSubtask(int subtaskId)
         {
-            var result = await _employeeServices.SubmitSubtaskAsync(subtaskId);
-
-            if (!result)
-                return NotFound(new { message = "Subtask not found" });
-
-            return Ok(new { message = "Subtask submitted successfully" });
+            try
+            {
+                var result = await _employeeServices.SubmitSubtaskAsync(subtaskId);
+                if (!result) return NotFound(new { message = "Subtask not found." });
+                return Ok(new { message = "Subtask submitted successfully." });
+            }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
         }
 
-        // ================= REQUEST TASK =================
+        // ─────────────────────────────────────────────────────────────────────
+        // REQUEST ASSIGNMENT
+        // ─────────────────────────────────────────────────────────────────────
 
-        [HttpPost("RequestTask/{userId}/{taskId}")]
-        public async Task<IActionResult> RequestTask(int userId, int taskId)
+        [HttpPost("tasks/request/{taskId}")]
+        public async Task<IActionResult> RequestTask(int taskId)
         {
-            var success = await _employeeServices.RequestTaskAssignmentAsync(userId, taskId);
-
-            if (!success)
-                return BadRequest(new { message = "Already assigned or request exists" });
-
-            return Ok(new { message = "Request submitted successfully" });
+            try
+            {
+                var success = await _employeeServices.RequestTaskAssignmentAsync(GetCurrentUserId(), taskId);
+                if (!success) return BadRequest(new { message = "Already assigned or request exists." });
+                return Ok(new { message = "Assignment request submitted." });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         }
 
-        // ================= COMMENTS =================
+        // ─────────────────────────────────────────────────────────────────────
+        // COMMENTS
+        // ─────────────────────────────────────────────────────────────────────
 
-        [HttpPost("TaskComment")]
+        [HttpPost("comments/task")]
         public async Task<IActionResult> AddTaskComment([FromBody] CreateTaskCommentDto dto)
         {
-            var result = await _employeeServices.AddTaskCommentAsync(dto);
-            return CreatedAtAction(nameof(AddTaskComment), new { id = result.Id }, result);
+            dto.AuthorId = GetCurrentUserId();
+            try
+            {
+                var result = await _employeeServices.AddTaskCommentAsync(dto);
+                return CreatedAtAction(nameof(AddTaskComment), new { id = result.Id }, result);
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         }
 
-        [HttpPost("SubtaskComment")]
+        [HttpPost("comments/subtask")]
         public async Task<IActionResult> AddSubtaskComment([FromBody] CreateSubtaskCommentDto dto)
         {
-            var result = await _employeeServices.AddSubtaskCommentAsync(dto);
-            return CreatedAtAction(nameof(AddSubtaskComment), new { id = result.Id }, result);
+            dto.AuthorId = GetCurrentUserId();
+            try
+            {
+                var result = await _employeeServices.AddSubtaskCommentAsync(dto);
+                return CreatedAtAction(nameof(AddSubtaskComment), new { id = result.Id }, result);
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         }
     }
 }

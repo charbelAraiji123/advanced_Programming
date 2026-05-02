@@ -3,204 +3,249 @@ using Final_Project_Adv.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},CookieAuth", Roles = "Manager")]
-public class ManagerApiController : ControllerBase
+namespace Final_Project_Adv.Controllers
 {
-    private readonly IManagerServices _managerServices;
-
-    public ManagerApiController(IManagerServices managerServices)
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Manager")]
+    public class ManagerApiController : ControllerBase
     {
-        _managerServices = managerServices;
-    }
+        private readonly IManagerServices _managerServices;
 
-    [HttpPost("Users/Create")]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
-    {
-        var result = await _managerServices.CreateUserAsync(dto);
-        return CreatedAtAction(nameof(CreateUser), new { id = result.Id }, result);
-    }
-
-    [HttpPost("Task/Create")]
-    public async Task<IActionResult> CreateTaskItem([FromBody] CreateTaskItemDto dto)
-    {
-        var result = await _managerServices.CreateTaskAsync(dto);
-        return CreatedAtAction(nameof(CreateTaskItem), new { id = result.Id }, result);
-    }
-
-    [HttpDelete("Task/Delete/{id}")]
-    public async Task<IActionResult> DeleteTaskItem(int id)
-    {
-        // Getting the current logged-in user's ID from the Claims
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        int requestingUserId = int.Parse(userIdClaim ?? "0");
-
-        // Ensure your service method accepts both arguments
-        var deleted = await _managerServices.DeleteTaskAsync(id, requestingUserId);
-
-        if (!deleted)
-            return NotFound(new { error = $"Task with ID {id} not found." });
-
-        return NoContent();
-    }
-
-    [HttpPost("Subtask/Create")]
-    public async Task<IActionResult> CreateSubtask([FromBody] CreateSubtaskDto dto)
-    {
-        try
+        public ManagerApiController(IManagerServices managerServices)
         {
-            var result = await _managerServices.CreateSubtaskAsync(dto);
-            return CreatedAtAction(nameof(CreateSubtask), new { id = result.Id }, result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-    }
-
-    [HttpDelete("SubTask/Delete/{id}")]
-    public async Task<IActionResult> DeleteSubTaskItem(int id)
-    {
-        // 1. Extract the current logged-in user's ID from the JWT token claims
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-        // 2. Parse the ID and handle cases where the claim might be missing
-        if (!int.TryParse(userIdClaim, out int requestingUserId))
-        {
-            return Unauthorized(new { error = "User identification missing from token." });
+            _managerServices = managerServices;
         }
 
-        // 3. Pass BOTH arguments to the service
-        var deleted = await _managerServices.DeleteSubTaskAsync(id, requestingUserId);
-
-        if (!deleted)
-            return NotFound(new { error = $"Subtask with ID {id} not found." });
-
-        return NoContent();
-    }
-
-    [HttpPut("users/update/{id}")]
-    public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
-    {
-        try
+        private int GetCurrentUserId()
         {
-            var result = await _managerServices.UpdateUserAsync(id, dto);
-            return Ok(result);
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(claim, out int id) ? id : 0;
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-    }
 
-    [HttpGet("users/GetAllUser")]
-    public async Task<IActionResult> GetAllusers()
-    {
-        var users = await _managerServices.GetAllUsersAsync();
-        return Ok(users);
-    }
+        // ─────────────────────────────────────────────────────────────────────
+        // USER
+        // ─────────────────────────────────────────────────────────────────────
 
-    [HttpGet("Tasks/GetAllTaks")]
-    public async Task<IActionResult> GetAllTasks()
-    {
-        var tasks = await _managerServices.GetAllTasksAsync();
-        return Ok(tasks);
-    }
-
-    [HttpGet("Subtasks/GetAll")]
-    public async Task<IActionResult> GetAllSubtasks()
-    {
-        var subtasks = await _managerServices.GetAllSubTasksAsync();
-        return Ok(subtasks);
-    }
-
-    [HttpPut("Task/Edit/{id}")]
-    public async Task<IActionResult> UpdateTaskItem(int id, [FromBody] UpdateTaskDTO dto)
-    {
-        try
+        [HttpPost("users/create")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
         {
-            var result = await _managerServices.UpdateTasksAsync(id, dto);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-    }
-
-    [HttpPut("Subtask/Edit/{id}")]
-    public async Task<IActionResult> UpdateSubtask(int id, [FromBody] UpdateSubTaskDTO dto)
-    {
-        try
-        {
-            var result = await _managerServices.UpdateSubTasksAsync(id, dto);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-    }
-
-    [HttpPost("TaskAssignment/{UId}/{TId}")]
-    public async Task<IActionResult> TaskAssign(int UId, int TId)
-    {
-        try
-        {
-            var result = await _managerServices.TaskAssignAsync(UId, TId);
-            return Ok(result);
-        }
-        catch (TaskLimitExceededException ex)
-        {
-            return BadRequest(new
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
             {
-                message = ex.Message,
-                availableUsers = ex.AvailableUsers
-            });
+                var result = await _managerServices.CreateUserAsync(dto);
+                return CreatedAtAction(nameof(GetAllUsers), new { id = result.Id }, result);
+            }
+            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
         }
-    }
 
-    [HttpDelete("Unassigntask/{userId}/{taskId}")]
-    public async Task<IActionResult> UnassignTask(int userId, int taskId)
-    {
-        var result = await _managerServices.UnassignTaskAsync(userId, taskId);
-        return Ok(result);
-    }
-
-    [HttpGet("ProgressBYUser/{userId}")]
-    public async Task<ActionResult<UserTaskStatusDto>> GetUserTaskStatus(int userId)
-    {
-        try
+        [HttpPut("users/update/{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
-            var result = await _managerServices.GetUserTaskStatus(userId);
+            try
+            {
+                var result = await _managerServices.UpdateUserAsync(id, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        [HttpGet("users/all")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _managerServices.GetAllUsersAsync();
+            return Ok(users);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // TASK
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Creates a task. The CreatedById in the DTO is overridden with the
+        /// authenticated manager's ID extracted from the JWT claim.
+        /// </summary>
+        [HttpPost("tasks/create")]
+        public async Task<IActionResult> CreateTask([FromBody] CreateTaskItemDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            dto.CreatedById = GetCurrentUserId(); // always use JWT identity
+            try
+            {
+                var result = await _managerServices.CreateTaskAsync(dto);
+                return CreatedAtAction(nameof(GetAllTasks), new { id = result.Id }, result);
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
+        [HttpDelete("tasks/delete/{id}")]
+        public async Task<IActionResult> DeleteTask(int id)
+        {
+            try
+            {
+                var deleted = await _managerServices.DeleteTaskAsync(id, GetCurrentUserId());
+                if (!deleted) return NotFound(new { message = $"Task {id} not found." });
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+        }
+
+        [HttpPut("tasks/update/{id}")]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateTaskDTO dto)
+        {
+            try
+            {
+                var result = await _managerServices.UpdateTasksAsync(id, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        [HttpGet("tasks/all")]
+        public async Task<IActionResult> GetAllTasks()
+        {
+            var tasks = await _managerServices.GetAllTasksAsync();
+            return Ok(tasks);
+        }
+
+        [HttpGet("tasks/old")]
+        public async Task<IActionResult> GetOldTasks()
+        {
+            var result = await _managerServices.GetOldTasksAsync();
             return Ok(result);
         }
-        catch (KeyNotFoundException ex)
+
+        // ─────────────────────────────────────────────────────────────────────
+        // SUBTASK
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Creates a subtask linked to a specific task and assigned to an employee.
+        /// Body must include TaskItemId and AssignedToId.
+        /// </summary>
+        [HttpPost("subtasks/create")]
+        public async Task<IActionResult> CreateSubtask([FromBody] CreateSubtaskDto dto)
         {
-            return NotFound(new { message = ex.Message });
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            // Override creator with JWT identity
+            dto = dto with { CreatedById = GetCurrentUserId() };
+            try
+            {
+                var result = await _managerServices.CreateSubtaskAsync(dto);
+                return CreatedAtAction(nameof(GetAllSubtasks), new { id = result.Id }, result);
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
         }
-    }
 
-    [HttpPost("TaskComment")]
-    public async Task<IActionResult> TaskComment([FromBody] CreateTaskCommentDto dto)
-    {
-        var result = await _managerServices.TaskCommentAsync(dto);
-        return CreatedAtAction(nameof(TaskComment), new { id = result.Id }, result);
-    }
+        [HttpDelete("subtasks/delete/{id}")]
+        public async Task<IActionResult> DeleteSubtask(int id)
+        {
+            try
+            {
+                var deleted = await _managerServices.DeleteSubTaskAsync(id, GetCurrentUserId());
+                if (!deleted) return NotFound(new { message = $"Subtask {id} not found." });
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+        }
 
-    [HttpPost("SubTaskComment")]
-    public async Task<IActionResult> SubTaskCommentAsync([FromBody] CreateSubtaskCommentDto dto)
-    {
-        var result = await _managerServices.SubTaskCommentAsync(dto);
-        return CreatedAtAction(nameof(SubTaskCommentAsync), new { id = result.Id }, result);
-    }
+        [HttpPut("subtasks/update/{id}")]
+        public async Task<IActionResult> UpdateSubtask(int id, [FromBody] UpdateSubTaskDTO dto)
+        {
+            try
+            {
+                var result = await _managerServices.UpdateSubTasksAsync(id, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
 
-    [HttpGet("old-tasks")]
-    public async Task<IActionResult> GetOldTasks()
-    {
-        var result = await _managerServices.GetOldTasksAsync();
-        return Ok(result);
+        [HttpGet("subtasks/all")]
+        public async Task<IActionResult> GetAllSubtasks()
+        {
+            var subtasks = await _managerServices.GetAllSubTasksAsync();
+            return Ok(subtasks);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // ASSIGNMENT
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpPost("assignments/assign/{userId}/{taskId}")]
+        public async Task<IActionResult> AssignTask(int userId, int taskId)
+        {
+            try
+            {
+                var result = await _managerServices.TaskAssignAsync(userId, taskId);
+                return Ok(result);
+            }
+            catch (TaskLimitExceededException ex)
+            {
+                return BadRequest(new { message = ex.Message, availableUsers = ex.AvailableUsers });
+            }
+            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
+        [HttpDelete("assignments/unassign/{userId}/{taskId}")]
+        public async Task<IActionResult> UnassignTask(int userId, int taskId)
+        {
+            try
+            {
+                var result = await _managerServices.UnassignTaskAsync(userId, taskId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // PROGRESS
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet("progress/{userId}")]
+        public async Task<IActionResult> GetUserTaskStatus(int userId)
+        {
+            try
+            {
+                var result = await _managerServices.GetUserTaskStatus(userId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // COMMENTS
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpPost("comments/task")]
+        public async Task<IActionResult> AddTaskComment([FromBody] CreateTaskCommentDto dto)
+        {
+            dto.AuthorId = GetCurrentUserId();
+            try
+            {
+                var result = await _managerServices.TaskCommentAsync(dto);
+                return CreatedAtAction(nameof(AddTaskComment), new { id = result.Id }, result);
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        [HttpPost("comments/subtask")]
+        public async Task<IActionResult> AddSubtaskComment([FromBody] CreateSubtaskCommentDto dto)
+        {
+            dto.AuthorId = GetCurrentUserId();
+            try
+            {
+                var result = await _managerServices.SubTaskCommentAsync(dto);
+                return CreatedAtAction(nameof(AddSubtaskComment), new { id = result.Id }, result);
+            }
+            catch (UnauthorizedAccessException ex) { return Forbid(ex.Message); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
     }
 }

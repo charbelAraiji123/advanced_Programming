@@ -1,4 +1,5 @@
 ﻿using Final_Project_Adv.Domain.DTO;
+using Final_Project_Adv.Domain.Enums;
 using Final_Project_Adv.Infrastructure.Data;
 using Final_Project_Adv.Models;
 using Microsoft.EntityFrameworkCore;
@@ -9,30 +10,27 @@ namespace Final_Project_Adv.Services
     {
         private readonly AppDbContext context;
         private readonly AuditService auditService;
+        private readonly PermissionService permissionService;
 
-        public EmployeeServices(AppDbContext context, AuditService auditService)
+        public EmployeeServices(AppDbContext context, AuditService auditService, PermissionService permissionService)
         {
             this.context = context;
             this.auditService = auditService;
+            this.permissionService = permissionService;
         }
 
-        // ================= TASKS =================
+        // ─────────────────────────────────────────────────────────────────────
+        // READ
+        // ─────────────────────────────────────────────────────────────────────
 
         public async Task<IEnumerable<TaskItemDto>> GetMyTasksAsync(int userId)
         {
             return await context.TaskAssignment
                 .Where(a => a.UserId == userId)
-                .Select(a => a.TaskItem)
-                .Select(t => new TaskItemDto(
-                    t.Id,
-                    t.Title,
-                    t.Description,
-                    t.Status,
-                    t.CreatedById,
-                    t.DepartmentId,
-                    t.CreatedAt,
-                    t.UpdatedAt
-                ))
+                .Select(a => new TaskItemDto(
+                    a.TaskItem.Id, a.TaskItem.Title, a.TaskItem.Description,
+                    a.TaskItem.Status, a.TaskItem.CreatedById, a.TaskItem.DepartmentId,
+                    a.TaskItem.CreatedAt, a.TaskItem.UpdatedAt))
                 .ToListAsync();
         }
 
@@ -41,37 +39,34 @@ namespace Final_Project_Adv.Services
             return await context.Subtask
                 .Where(s => s.AssignedToId == userId)
                 .Select(s => new SubtaskDto(
-                    s.Id,
-                    s.Title,
-                    s.Description,
-                    s.Status,
-                    s.TaskItemId,
-                    s.AssignedToId,
-                    s.CreatedById,
-                    s.CreatedAt,
-                    s.UpdatedAt
-                ))
+                    s.Id, s.Title, s.Description, s.Status,
+                    s.TaskItemId, s.AssignedToId, s.CreatedById,
+                    s.CreatedAt, s.UpdatedAt))
                 .ToListAsync();
         }
 
-        // ================= ACCEPT (Pending → InProgress) =================
+        // ─────────────────────────────────────────────────────────────────────
+        // ACCEPT  (Pending → InProgress)
+        // ─────────────────────────────────────────────────────────────────────
 
         public async Task<bool> AcceptTaskAsync(int taskId)
         {
             var task = await context.TaskItem.FindAsync(taskId);
             if (task == null) return false;
 
+            if (task.Status != Domain.Enums.TaskStatus.Pending)
+                throw new InvalidOperationException("Only pending tasks can be accepted.");
+
+            var old = new { task.Id, Status = task.Status.ToString() };
+
             task.Status = Domain.Enums.TaskStatus.InProgress;
             task.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
 
-            // FIX: flat anonymous object — no navigation properties
             await auditService.LogAsync(
-                "Accepted",
-                "TaskItem",
-                task.Id,
-                null,
+                "Accepted", "TaskItem", task.Id,
+                old,
                 new
                 {
                     task.Id,
@@ -80,30 +75,33 @@ namespace Final_Project_Adv.Services
                     task.DepartmentId,
                     task.CreatedById
                 },
-                task.CreatedById
-            );
+                task.CreatedById);
 
             return true;
         }
 
-        // ================= SUBMIT (→ Completed) =================
+        // ─────────────────────────────────────────────────────────────────────
+        // SUBMIT  (→ Completed)
+        // ─────────────────────────────────────────────────────────────────────
 
         public async Task<bool> SubmitTaskAsync(int taskId)
         {
             var task = await context.TaskItem.FindAsync(taskId);
             if (task == null) return false;
 
+            if (task.Status == Domain.Enums.TaskStatus.Completed)
+                throw new InvalidOperationException("Task is already completed.");
+
+            var old = new { task.Id, Status = task.Status.ToString() };
+
             task.Status = Domain.Enums.TaskStatus.Completed;
             task.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
 
-            // FIX: flat anonymous object — no navigation properties
             await auditService.LogAsync(
-                "Submitted",
-                "TaskItem",
-                task.Id,
-                null,
+                "Submitted", "TaskItem", task.Id,
+                old,
                 new
                 {
                     task.Id,
@@ -112,8 +110,7 @@ namespace Final_Project_Adv.Services
                     task.DepartmentId,
                     task.CreatedById
                 },
-                task.CreatedById
-            );
+                task.CreatedById);
 
             return true;
         }
@@ -123,17 +120,19 @@ namespace Final_Project_Adv.Services
             var subtask = await context.Subtask.FindAsync(subtaskId);
             if (subtask == null) return false;
 
+            if (subtask.Status == Domain.Enums.TaskStatus.Completed)
+                throw new InvalidOperationException("Subtask is already completed.");
+
+            var old = new { subtask.Id, Status = subtask.Status.ToString() };
+
             subtask.Status = Domain.Enums.TaskStatus.Completed;
             subtask.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
 
-            // FIX: flat anonymous object — no navigation properties
             await auditService.LogAsync(
-                "Submitted",
-                "Subtask",
-                subtask.Id,
-                null,
+                "Submitted", "Subtask", subtask.Id,
+                old,
                 new
                 {
                     subtask.Id,
@@ -143,19 +142,23 @@ namespace Final_Project_Adv.Services
                     subtask.AssignedToId,
                     subtask.CreatedById
                 },
-                subtask.CreatedById
-            );
+                subtask.CreatedById);
 
             return true;
         }
 
-        // ================= REQUEST TASK =================
+        // ─────────────────────────────────────────────────────────────────────
+        // REQUEST ASSIGNMENT
+        // ─────────────────────────────────────────────────────────────────────
 
         public async Task<bool> RequestTaskAssignmentAsync(int userId, int taskId)
         {
+            var taskExists = await context.TaskItem.AnyAsync(t => t.Id == taskId);
+            if (!taskExists)
+                throw new KeyNotFoundException($"Task with ID {taskId} does not exist.");
+
             var exists = await context.TaskAssignment
                 .AnyAsync(x => x.UserId == userId && x.TaskItemId == taskId);
-
             if (exists) return false;
 
             context.TaskAssignment.Add(new TaskAssignment
@@ -169,10 +172,18 @@ namespace Final_Project_Adv.Services
             return true;
         }
 
-        // ================= COMMENTS =================
+        // ─────────────────────────────────────────────────────────────────────
+        // COMMENTS
+        // ─────────────────────────────────────────────────────────────────────
 
         public async Task<TaskCommentDto> AddTaskCommentAsync(CreateTaskCommentDto dto)
         {
+            await permissionService.RequirePermissionAsync(dto.AuthorId, PermissionType.AddComment);
+
+            var taskExists = await context.TaskItem.AnyAsync(t => t.Id == dto.TaskItemId);
+            if (!taskExists)
+                throw new KeyNotFoundException($"Task with ID {dto.TaskItemId} does not exist.");
+
             var comment = new TaskComment
             {
                 Content = dto.Content,
@@ -184,6 +195,12 @@ namespace Final_Project_Adv.Services
 
             context.TaskComment.Add(comment);
             await context.SaveChangesAsync();
+
+            await auditService.LogAsync(
+                "CommentAdded", "TaskComment", comment.Id,
+                null,
+                new { comment.Id, comment.Content, comment.AuthorId, comment.TaskItemId },
+                dto.AuthorId);
 
             return new TaskCommentDto
             {
@@ -198,6 +215,12 @@ namespace Final_Project_Adv.Services
 
         public async Task<SubtaskCommentDto> AddSubtaskCommentAsync(CreateSubtaskCommentDto dto)
         {
+            await permissionService.RequirePermissionAsync(dto.AuthorId, PermissionType.AddComment);
+
+            var subtaskExists = await context.Subtask.AnyAsync(s => s.Id == dto.SubtaskId);
+            if (!subtaskExists)
+                throw new KeyNotFoundException($"Subtask with ID {dto.SubtaskId} does not exist.");
+
             var comment = new SubtaskComment
             {
                 Content = dto.Content,
@@ -209,6 +232,12 @@ namespace Final_Project_Adv.Services
 
             context.SubtaskComment.Add(comment);
             await context.SaveChangesAsync();
+
+            await auditService.LogAsync(
+                "CommentAdded", "SubtaskComment", comment.Id,
+                null,
+                new { comment.Id, comment.Content, comment.AuthorId, comment.SubtaskId },
+                dto.AuthorId);
 
             return new SubtaskCommentDto
             {
