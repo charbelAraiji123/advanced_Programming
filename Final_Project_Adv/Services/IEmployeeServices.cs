@@ -7,6 +7,8 @@ namespace Final_Project_Adv.Services
         // ── Read ──────────────────────────────────────────────────────────────
         Task<IEnumerable<TaskItemDto>> GetMyTasksAsync(int userId);
         Task<IEnumerable<SubtaskDto>> GetMySubtasksAsync(int userId);
+        Task<IEnumerable<SubtaskDto>> GetMySubtasksForTaskAsync(int userId, int taskItemId);
+        Task<IEnumerable<SubtaskDto>> GetUnassignedSubtasksForTaskAsync(int taskItemId);
 
         // ── Task lifecycle ────────────────────────────────────────────────────
         Task<bool> AcceptTaskAsync(int taskId);
@@ -14,7 +16,8 @@ namespace Final_Project_Adv.Services
 
         // ── Subtask lifecycle ─────────────────────────────────────────────────
         Task<bool> SubmitSubtaskAsync(int subtaskId);
-        Task<SubtaskDto> CreateSubtaskAsync(CreateSubtaskDto dto);   // NEW
+        Task<SubtaskDto> CreateSubtaskAsync(CreateSubtaskDto dto);
+        Task<bool> AcceptSubtaskAsync(int subtaskId, int userId);
 
         // ── Requests ──────────────────────────────────────────────────────────
         Task<bool> RequestTaskAssignmentAsync(int userId, int taskId);

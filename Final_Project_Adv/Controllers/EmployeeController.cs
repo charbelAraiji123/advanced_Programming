@@ -14,8 +14,6 @@ namespace Final_Project_Adv.Controllers
             _employeeServices = employeeServices;
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
-
         private int GetCurrentUserId()
         {
             var idStr = HttpContext.Session.GetString("UserId");
@@ -24,8 +22,6 @@ namespace Final_Project_Adv.Controllers
 
         private string? GetCurrentUserRole() =>
             HttpContext.Session.GetString("UserRole");
-
-        // ── GET /Employee/ViewTask ────────────────────────────────────────────
 
         [HttpGet("ViewTask")]
         public async Task<IActionResult> ViewTask()
@@ -38,8 +34,6 @@ namespace Final_Project_Adv.Controllers
             return View(tasks);
         }
 
-        // ── POST /Employee/AcceptTask ─────────────────────────────────────────
-
         [HttpPost("AcceptTask")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AcceptTask(int taskId)
@@ -47,44 +41,73 @@ namespace Final_Project_Adv.Controllers
             try
             {
                 var result = await _employeeServices.AcceptTaskAsync(taskId);
-                if (!result)
-                    TempData["Error"] = "Task not found.";
-                else
-                    TempData["Success"] = "Task accepted — it is now In Progress.";
+                if (!result) TempData["Error"] = "Task not found.";
+                else TempData["Success"] = "Task accepted — it is now In Progress.";
             }
-            catch (InvalidOperationException ex)
-            {
-                TempData["Error"] = ex.Message;
-            }
-
+            catch (InvalidOperationException ex) { TempData["Error"] = ex.Message; }
             return RedirectToAction("ViewTask");
         }
 
-        // ── POST /Employee/CreateSubtask ──────────────────────────────────────
+        [HttpGet("GetSubtasksForTask")]
+        public async Task<IActionResult> GetSubtasksForTask(int taskItemId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized();
+
+            var mine = await _employeeServices.GetMySubtasksForTaskAsync(userId, taskItemId);
+            var unassigned = await _employeeServices.GetUnassignedSubtasksForTaskAsync(taskItemId);
+
+            return Json(new
+            {
+                mine = mine.Select(s => new {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    Status = s.Status.ToString(),
+                    s.TaskItemId,
+                    s.AssignedToId
+                }),
+                unassigned = unassigned.Select(s => new {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    Status = s.Status.ToString(),
+                    s.TaskItemId,
+                    s.AssignedToId
+                })
+            });
+        }
+
+        [HttpPost("AcceptSubtask")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AcceptSubtask(int subtaskId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Login", "Account");
+            try
+            {
+                var result = await _employeeServices.AcceptSubtaskAsync(subtaskId, userId);
+                if (!result) TempData["Error"] = "Subtask not found.";
+                else TempData["Success"] = "Subtask accepted — it is now In Progress.";
+            }
+            catch (InvalidOperationException ex) { TempData["Error"] = ex.Message; }
+            return RedirectToAction("ViewTask");
+        }
 
         [HttpPost("CreateSubtask")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateSubtask(
-            string title,
-            string? description,
-            int taskItemId,
-            int? assignedToId)
+            string title, string? description, int taskItemId, int? assignedToId)
         {
             var role = GetCurrentUserRole();
             if (role is not ("Employee" or "Manager"))
                 return RedirectToAction("Login", "Account");
 
             if (string.IsNullOrWhiteSpace(title))
-            {
-                TempData["Error"] = "Subtask title is required.";
-                return RedirectToAction("ViewTask");
-            }
+            { TempData["Error"] = "Subtask title is required."; return RedirectToAction("ViewTask"); }
 
             if (taskItemId <= 0)
-            {
-                TempData["Error"] = "Invalid task reference.";
-                return RedirectToAction("ViewTask");
-            }
+            { TempData["Error"] = "Invalid task reference."; return RedirectToAction("ViewTask"); }
 
             try
             {
@@ -93,25 +116,70 @@ namespace Final_Project_Adv.Controllers
                     description?.Trim() ?? string.Empty,
                     taskItemId,
                     GetCurrentUserId(),
-                    assignedToId > 0 ? assignedToId : null
-                );
+                    assignedToId > 0 ? assignedToId : null);
 
                 await _employeeServices.CreateSubtaskAsync(dto);
-
                 TempData["Success"] = $"Subtask \"{title.Trim()}\" created successfully.";
             }
-            catch (KeyNotFoundException ex)
+            catch (KeyNotFoundException ex) { TempData["Error"] = ex.Message; }
+            catch (InvalidOperationException ex) { TempData["Error"] = ex.Message; }
+            catch (Exception ex) { TempData["Error"] = $"Unexpected error: {ex.Message}"; }
+
+            return RedirectToAction("ViewTask");
+        }
+
+        // ── POST /Employee/PostTaskComment ────────────────────────────────────
+
+        [HttpPost("PostTaskComment")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PostTaskComment(int taskItemId, string content)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Login", "Account");
+
+            if (string.IsNullOrWhiteSpace(content))
+            { TempData["Error"] = "Comment cannot be empty."; return RedirectToAction("ViewTask"); }
+
+            try
             {
-                TempData["Error"] = ex.Message;
+                await _employeeServices.AddTaskCommentAsync(new CreateTaskCommentDto
+                {
+                    Content = content.Trim(),
+                    AuthorId = userId,
+                    TaskItemId = taskItemId
+                });
+                TempData["Success"] = "Comment posted.";
             }
-            catch (InvalidOperationException ex)
+            catch (UnauthorizedAccessException) { TempData["Error"] = "You do not have permission to add comments."; }
+            catch (Exception ex) { TempData["Error"] = $"Error: {ex.Message}"; }
+
+            return RedirectToAction("ViewTask");
+        }
+
+        // ── POST /Employee/PostSubtaskComment ─────────────────────────────────
+
+        [HttpPost("PostSubtaskComment")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PostSubtaskComment(int subtaskId, string content)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Login", "Account");
+
+            if (string.IsNullOrWhiteSpace(content))
+            { TempData["Error"] = "Comment cannot be empty."; return RedirectToAction("ViewTask"); }
+
+            try
             {
-                TempData["Error"] = ex.Message;
+                await _employeeServices.AddSubtaskCommentAsync(new CreateSubtaskCommentDto
+                {
+                    Content = content.Trim(),
+                    AuthorId = userId,
+                    SubtaskId = subtaskId
+                });
+                TempData["Success"] = "Comment posted.";
             }
-            catch (Exception ex)
-            {
-                TempData["Error"] = $"Unexpected error: {ex.Message}";
-            }
+            catch (UnauthorizedAccessException) { TempData["Error"] = "You do not have permission to add comments."; }
+            catch (Exception ex) { TempData["Error"] = $"Error: {ex.Message}"; }
 
             return RedirectToAction("ViewTask");
         }

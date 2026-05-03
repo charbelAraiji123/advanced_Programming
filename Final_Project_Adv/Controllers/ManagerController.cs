@@ -232,6 +232,53 @@ namespace Final_Project_Adv.Controllers
             return View();
         }
 
+        // Add these two actions inside the ManagerController class,
+        // after the existing GetSubtasks action.
+
+        // ── GET /Manager/GetTaskComments?taskId=X ─────────────────────────────────
+
+        [HttpGet("GetTaskComments")]
+        public async Task<IActionResult> GetTaskComments(int taskId)
+        {
+            if (taskId <= 0) return BadRequest(new { message = "Invalid taskId." });
+
+            var comments = await _context.TaskComment
+                .Where(c => c.TaskItemId == taskId)
+                .OrderBy(c => c.CreatedAt)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Content,
+                    AuthorName = c.Author.Username,
+                    c.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(comments);
+        }
+
+        // ── GET /Manager/GetSubtaskComments?subtaskId=X ───────────────────────────
+
+        [HttpGet("GetSubtaskComments")]
+        public async Task<IActionResult> GetSubtaskComments(int subtaskId)
+        {
+            if (subtaskId <= 0) return BadRequest(new { message = "Invalid subtaskId." });
+
+            var comments = await _context.SubtaskComment
+                .Where(c => c.SubtaskId == subtaskId)
+                .OrderBy(c => c.CreatedAt)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Content,
+                    AuthorName = c.Author.Username,
+                    c.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(comments);
+        }
+
         [HttpPost("UpdateTaskPost")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateTaskPost()

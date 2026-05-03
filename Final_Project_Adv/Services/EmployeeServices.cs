@@ -53,8 +53,30 @@ namespace Final_Project_Adv.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<SubtaskDto>> GetMySubtasksForTaskAsync(int userId, int taskItemId)
+        {
+            return await context.Subtask
+                .Where(s => s.AssignedToId == userId && s.TaskItemId == taskItemId)
+                .Select(s => new SubtaskDto(
+                    s.Id, s.Title, s.Description, s.Status,
+                    s.TaskItemId, s.AssignedToId, s.CreatedById,
+                    s.CreatedAt, s.UpdatedAt))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SubtaskDto>> GetUnassignedSubtasksForTaskAsync(int taskItemId)
+        {
+            return await context.Subtask
+                .Where(s => s.TaskItemId == taskItemId && s.AssignedToId == null)
+                .Select(s => new SubtaskDto(
+                    s.Id, s.Title, s.Description, s.Status,
+                    s.TaskItemId, s.AssignedToId, s.CreatedById,
+                    s.CreatedAt, s.UpdatedAt))
+                .ToListAsync();
+        }
+
         // ─────────────────────────────────────────────────────────────────────
-        // ACCEPT  (Pending → InProgress)
+        // ACCEPT TASK  (Pending → InProgress)
         // ─────────────────────────────────────────────────────────────────────
 
         public async Task<bool> AcceptTaskAsync(int taskId)
@@ -160,7 +182,47 @@ namespace Final_Project_Adv.Services
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // CREATE SUBTASK  (NEW)
+        // ACCEPT SUBTASK  (Pending → InProgress; self-assigns if unassigned)
+        // ─────────────────────────────────────────────────────────────────────
+
+        public async Task<bool> AcceptSubtaskAsync(int subtaskId, int userId)
+        {
+            var subtask = await context.Subtask.FindAsync(subtaskId);
+            if (subtask == null) return false;
+
+            if (subtask.Status != Domain.Enums.TaskStatus.Pending)
+                throw new InvalidOperationException("Only pending subtasks can be accepted.");
+
+            var old = new { subtask.Id, Status = subtask.Status.ToString(), subtask.AssignedToId };
+
+            subtask.Status = Domain.Enums.TaskStatus.InProgress;
+            subtask.UpdatedAt = DateTime.UtcNow;
+
+            // If unassigned, claim it for the accepting user
+            if (subtask.AssignedToId == null)
+                subtask.AssignedToId = userId;
+
+            await context.SaveChangesAsync();
+
+            await auditService.LogAsync(
+                "SubtaskAccepted", "Subtask", subtask.Id,
+                old,
+                new
+                {
+                    subtask.Id,
+                    subtask.Title,
+                    Status = subtask.Status.ToString(),
+                    subtask.TaskItemId,
+                    subtask.AssignedToId,
+                    subtask.CreatedById
+                },
+                userId);
+
+            return true;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // CREATE SUBTASK
         // ─────────────────────────────────────────────────────────────────────
 
         public async Task<SubtaskDto> CreateSubtaskAsync(CreateSubtaskDto dto)

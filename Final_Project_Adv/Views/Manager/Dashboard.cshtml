@@ -54,7 +54,6 @@
             color: #fff;
         }
 
-        /* ── Nav ── */
         .db-nav {
             display: flex;
             gap: 24px;
@@ -70,11 +69,10 @@
             gap: 6px;
             padding: 4px 0;
             border-bottom: 2px solid transparent;
-            transition: color .2s, border-color .2s;
+            transition: color .2s,border-color .2s;
         }
 
-            .db-nav-link.active,
-            .db-nav-link:hover {
+            .db-nav-link.active, .db-nav-link:hover {
                 color: #fff;
             }
 
@@ -82,7 +80,6 @@
                 border-bottom-color: #6c63ff;
             }
 
-        /* ── Buttons ── */
         .db-btn-primary {
             background: #6c63ff;
             color: #fff;
@@ -101,26 +98,6 @@
             .db-btn-primary:hover {
                 background: #574fd6;
                 color: #fff;
-            }
-
-        .db-btn-secondary {
-            background: #fff;
-            color: #1e1e2d;
-            border: 1px solid #ddd;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all .2s;
-        }
-
-            .db-btn-secondary:hover {
-                background: #f1f5f9;
-                color: #1e1e2d;
             }
 
         .db-btn-ghost {
@@ -144,6 +121,12 @@
                 border-color: #6c63ff;
             }
 
+        .db-topbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         /* ── View Subtasks button ── */
         .btn-view-subtasks {
             background: #fff;
@@ -157,7 +140,7 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            transition: all 0.18s;
+            transition: all .18s;
             white-space: nowrap;
             font-family: inherit;
         }
@@ -167,18 +150,51 @@
                 color: #fff;
             }
 
-            .btn-view-subtasks:disabled {
-                border-color: #ddd;
-                color: #bbb;
-                cursor: default;
-                background: #fafafa;
+        /* NEW ── View Comments button ── */
+        .btn-view-comments {
+            background: #fff;
+            border: 1.5px solid #e67e22;
+            color: #e67e22;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all .18s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+            .btn-view-comments:hover {
+                background: #e67e22;
+                color: #fff;
             }
 
-        .db-topbar-right {
-            display: flex;
-            gap: 8px;
+        /* NEW ── Subtask comments button (inside drawer) ── */
+        .btn-subtask-comments {
+            background: #fff3e0;
+            border: 1px solid #e67e22;
+            color: #d35400;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
             align-items: center;
+            gap: 4px;
+            transition: all .15s;
+            white-space: nowrap;
+            font-family: inherit;
         }
+
+            .btn-subtask-comments:hover {
+                background: #e67e22;
+                color: #fff;
+            }
 
         /* ── Main ── */
         .db-main {
@@ -210,7 +226,7 @@
         /* ── Stat cards ── */
         .db-stats {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4,1fr);
             gap: 16px;
             margin-bottom: 32px;
         }
@@ -330,7 +346,6 @@
                 background: #fafafa;
             }
 
-        /* Badges */
         .db-badge {
             padding: 3px 10px;
             border-radius: 20px;
@@ -353,7 +368,6 @@
             color: #15803d;
         }
 
-        /* Banners */
         .success-banner {
             background: #dcfce7;
             color: #15803d;
@@ -386,12 +400,12 @@
             font-size: 14px;
         }
 
-        /* ── Subtask Drawer ── */
+        /* ── Shared drawer base ── */
         .drawer-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.35);
+            background: rgba(0,0,0,.35);
             z-index: 900;
         }
 
@@ -399,7 +413,7 @@
                 display: block;
             }
 
-        .subtask-drawer {
+        .side-drawer {
             position: fixed;
             top: 0;
             right: 0;
@@ -407,20 +421,30 @@
             width: 420px;
             max-width: 95vw;
             background: #fff;
-            box-shadow: -6px 0 32px rgba(0, 0, 0, 0.14);
+            box-shadow: -6px 0 32px rgba(0,0,0,.14);
             z-index: 1000;
             display: flex;
             flex-direction: column;
             transform: translateX(100%);
-            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform .28s cubic-bezier(.4,0,.2,1);
         }
 
-            .subtask-drawer.open {
+            .side-drawer.open {
                 transform: translateX(0);
             }
 
+        /* ── Subtask drawer head ── */
         .drawer-head {
-            background: linear-gradient(135deg, #6c63ff 0%, #4e73df 100%);
+            background: linear-gradient(135deg,#6c63ff 0%,#4e73df 100%);
+            padding: 20px 24px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        /* ── Comment drawer head ── */
+        .drawer-head-comment {
+            background: linear-gradient(135deg,#e67e22 0%,#d35400 100%);
             padding: 20px 24px;
             display: flex;
             align-items: flex-start;
@@ -436,13 +460,13 @@
         }
 
         .drawer-head-sub {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255,255,255,.7);
             font-size: 12px;
             margin-top: 3px;
         }
 
         .drawer-close {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,.2);
             border: none;
             color: #fff;
             width: 30px;
@@ -454,12 +478,12 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            transition: background 0.15s;
+            transition: background .15s;
             line-height: 1;
         }
 
             .drawer-close:hover {
-                background: rgba(255, 255, 255, 0.35);
+                background: rgba(255,255,255,.35);
             }
 
         .drawer-body {
@@ -468,6 +492,20 @@
             padding: 20px 24px;
         }
 
+            .drawer-body::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            .drawer-body::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .drawer-body::-webkit-scrollbar-thumb {
+                background: #e0e0e0;
+                border-radius: 99px;
+            }
+
+        /* ── Subtask card (inside subtask drawer) ── */
         .subtask-item {
             background: #f8f9fc;
             border: 1px solid #e8ecf4;
@@ -556,6 +594,39 @@
             gap: 4px;
         }
 
+        /* ── Comment card (inside comment drawer) ── */
+        .comment-card {
+            background: #fff8f3;
+            border: 1px solid #fde8d3;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+
+        .comment-author {
+            font-size: 13px;
+            font-weight: 700;
+            color: #d35400;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .comment-body {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.55;
+            word-break: break-word;
+        }
+
+        .comment-time {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 6px;
+        }
+
+        /* ── Drawer states (loading / empty / error) ── */
         .drawer-state {
             display: flex;
             flex-direction: column;
@@ -570,7 +641,7 @@
 
         .drawer-state-icon {
             font-size: 32px;
-            opacity: 0.4;
+            opacity: .4;
         }
 
         .spin-ring {
@@ -579,26 +650,17 @@
             border: 3px solid #e0e0e0;
             border-top-color: #6c63ff;
             border-radius: 50%;
-            animation: rotate 0.7s linear infinite;
+            animation: rotate .7s linear infinite;
+        }
+
+        .spin-ring-orange {
+            border-top-color: #e67e22;
         }
 
         @@keyframes rotate {
             to {
                 transform: rotate(360deg);
             }
-        }
-
-        .drawer-body::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .drawer-body::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .drawer-body::-webkit-scrollbar-thumb {
-            background: #e0e0e0;
-            border-radius: 99px;
         }
     </style>
 }
@@ -622,8 +684,7 @@
             <a href="/Manager/CreateTask" class="db-btn-primary">&#43; New Task</a>
             <form action="/Account/Logout" method="post" style="display:inline;margin:0;">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="db-btn-ghost"
-                        style="color:#f87171;border-color:#f87171;">
+                <button type="submit" class="db-btn-ghost" style="color:#f87171;border-color:#f87171;">
                     &#x2192; Logout
                 </button>
             </form>
@@ -676,8 +737,7 @@
                     <span class="db-task-count">@total tasks</span>
                 </div>
                 <input class="db-search" id="taskSearch"
-                       placeholder="Search title or user…"
-                       oninput="filterTable()" />
+                       placeholder="Search title or user…" oninput="filterTable()" />
             </div>
 
             <div class="db-table-scroll">
@@ -691,15 +751,13 @@
                             <th>Department</th>
                             <th>Created</th>
                             <th>Updated</th>
-                            <th class="text-center">Subtasks</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (!tasks.Any())
                         {
-                            <tr>
-                                <td colspan="8" class="db-empty">No tasks found.</td>
-                            </tr>
+                            <tr><td colspan="8" class="db-empty">No tasks found.</td></tr>
                         }
 
                         @foreach (var t in tasks)
@@ -721,6 +779,7 @@
                                     }
                                     else
                                     {
+
                                         <span style="color:#aaa;font-style:italic;">Unassigned</span>
                                     }
                                 </td>
@@ -728,11 +787,20 @@
                                 <td>@t.DepartmentName</td>
                                 <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
                                 <td>@t.UpdatedAt.ToString("yyyy-MM-dd")</td>
-                                <td style="text-align:center;">
+                                <td style="text-align:center;white-space:nowrap;">
+
+                                    <!-- Subtasks button (existing) -->
                                     <button class="btn-view-subtasks"
                                             onclick="openSubtaskDrawer(@t.Id, '@Html.Raw(t.Title.Replace("'", "\\'"))')">
-                                        &#128196; View Subtasks
+                                        &#128196; Subtasks
                                     </button>
+
+                                    <!-- NEW: View Comments button -->
+                                    <button class="btn-view-comments"
+                                            onclick="openTaskCommentDrawer(@t.Id, '@Html.Raw(t.Title.Replace("'", "\\'"))')">
+                                        &#128172; Comments
+                                    </button>
+
                                 </td>
                             </tr>
                         }
@@ -744,23 +812,48 @@
     </main>
 </div>
 
-<!-- ── Drawer overlay ── -->
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeSubtaskDrawer()"></div>
+<!-- ── Shared overlay ── -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeAllDrawers()"></div>
 
-<!-- ── Subtask Drawer ── -->
-<aside class="subtask-drawer" id="subtaskDrawer" aria-label="Subtasks panel">
+<!-- ── SUBTASK DRAWER (existing) ── -->
+<aside class="side-drawer" id="subtaskDrawer" aria-label="Subtasks panel">
     <div class="drawer-head">
         <div>
             <p class="drawer-head-title" id="drawerTitle">Subtasks</p>
             <p class="drawer-head-sub" id="drawerSub">—</p>
         </div>
-        <button class="drawer-close" onclick="closeSubtaskDrawer()" aria-label="Close panel">&#10005;</button>
+        <button class="drawer-close" onclick="closeAllDrawers()" aria-label="Close">&#10005;</button>
     </div>
     <div class="drawer-body" id="drawerBody"></div>
 </aside>
 
+<!-- ── TASK COMMENTS DRAWER (NEW) ── -->
+<aside class="side-drawer" id="taskCommentDrawer" aria-label="Task comments panel">
+    <div class="drawer-head-comment">
+        <div>
+            <p class="drawer-head-title" id="taskCommentDrawerTitle">Task Comments</p>
+            <p class="drawer-head-sub" id="taskCommentDrawerSub">—</p>
+        </div>
+        <button class="drawer-close" onclick="closeAllDrawers()" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="drawer-body" id="taskCommentDrawerBody"></div>
+</aside>
+
+<!-- ── SUBTASK COMMENTS DRAWER (NEW) ── -->
+<aside class="side-drawer" id="subtaskCommentDrawer" aria-label="Subtask comments panel">
+    <div class="drawer-head-comment">
+        <div>
+            <p class="drawer-head-title" id="subtaskCommentDrawerTitle">Subtask Comments</p>
+            <p class="drawer-head-sub" id="subtaskCommentDrawerSub">—</p>
+        </div>
+        <button class="drawer-close" onclick="closeAllDrawers()" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="drawer-body" id="subtaskCommentDrawerBody"></div>
+</aside>
+
 @section Scripts {
     <script>
+        // ── Table search ──────────────────────────────────────────────────────
         function filterTable() {
             var q    = document.getElementById('taskSearch').value.toLowerCase();
             var rows = document.querySelectorAll('#taskTable tbody tr');
@@ -769,25 +862,37 @@
             });
         }
 
-        function openSubtaskDrawer(taskId, taskTitle) {
-            document.getElementById('drawerTitle').textContent = 'Subtasks';
-            document.getElementById('drawerSub').textContent   = taskTitle;
-            document.getElementById('drawerBody').innerHTML    = renderLoading();
-            document.getElementById('drawerOverlay').classList.add('open');
-            document.getElementById('subtaskDrawer').classList.add('open');
-            document.body.style.overflow = 'hidden';
-            loadSubtasks(taskId);
-        }
-
-        function closeSubtaskDrawer() {
+        // ── Close all drawers ─────────────────────────────────────────────────
+        function closeAllDrawers() {
+            ['subtaskDrawer','taskCommentDrawer','subtaskCommentDrawer'].forEach(function(id) {
+                document.getElementById(id).classList.remove('open');
+            });
             document.getElementById('drawerOverlay').classList.remove('open');
-            document.getElementById('subtaskDrawer').classList.remove('open');
             document.body.style.overflow = '';
         }
 
+        function openOverlay() {
+            document.getElementById('drawerOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeSubtaskDrawer();
+            if (e.key === 'Escape') closeAllDrawers();
         });
+
+        // ════════════════════════════════════════════════════════════════════
+        //  SUBTASK DRAWER  (existing logic, unchanged except comment button added)
+        // ════════════════════════════════════════════════════════════════════
+
+        function openSubtaskDrawer(taskId, taskTitle) {
+            closeAllDrawers();
+            document.getElementById('drawerTitle').textContent = 'Subtasks';
+            document.getElementById('drawerSub').textContent   = taskTitle;
+            document.getElementById('drawerBody').innerHTML    = renderLoading('#6c63ff');
+            openOverlay();
+            document.getElementById('subtaskDrawer').classList.add('open');
+            loadSubtasks(taskId);
+        }
 
         async function loadSubtasks(taskId) {
             try {
@@ -800,25 +905,11 @@
             }
         }
 
-        function renderLoading() {
-            return '<div class="drawer-state"><div class="spin-ring"></div><span>Loading subtasks…</span></div>';
-        }
-
-        function renderError(msg) {
-            return '<div class="drawer-state">'
-                + '<span class="drawer-state-icon">&#9888;</span>'
-                + '<span>Could not load subtasks.</span>'
-                + '<small style="color:#ccc;">' + esc(msg) + '</small>'
-                + '</div>';
-        }
-
         function renderSubtasks(list) {
             if (!list || list.length === 0) {
                 document.getElementById('drawerBody').innerHTML =
-                    '<div class="drawer-state">'
-                    + '<span class="drawer-state-icon">&#128193;</span>'
-                    + '<span>No subtasks for this task yet.</span>'
-                    + '</div>';
+                    '<div class="drawer-state"><span class="drawer-state-icon">&#128193;</span>'
+                    + '<span>No subtasks for this task yet.</span></div>';
                 return;
             }
 
@@ -836,6 +927,11 @@
                                     ? '<span class="subtask-assignee">&#128100; ' + esc(s.assignedToName) + '</span>'
                                     : '<span class="subtask-assignee" style="color:#ccc;">Unassigned</span>';
 
+                // NEW: comments button on each subtask card
+                var commentBtn = '<button class="btn-subtask-comments" '
+                    + 'onclick="openSubtaskCommentDrawer(' + s.id + ', \'' + esc(s.title).replace(/'/g,"\\'") + '\')">'
+                    + '&#128172; Comments</button>';
+
                 html +=
                     '<div class="subtask-item">'
                     + '<span class="subtask-dot ' + dotClass + '"></span>'
@@ -845,12 +941,110 @@
                     +   '<div class="subtask-meta">'
                     +     '<span class="subtask-badge ' + badgeClass + '">' + label + '</span>'
                     +     assignee
+                    +     commentBtn
                     +   '</div>'
                     + '</div>'
                     + '</div>';
             });
 
             document.getElementById('drawerBody').innerHTML = html;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        //  TASK COMMENTS DRAWER  (NEW)
+        // ════════════════════════════════════════════════════════════════════
+
+        function openTaskCommentDrawer(taskId, taskTitle) {
+            closeAllDrawers();
+            document.getElementById('taskCommentDrawerTitle').textContent = 'Comments';
+            document.getElementById('taskCommentDrawerSub').textContent   = taskTitle;
+            document.getElementById('taskCommentDrawerBody').innerHTML    = renderLoading('#e67e22');
+            openOverlay();
+            document.getElementById('taskCommentDrawer').classList.add('open');
+            loadTaskComments(taskId);
+        }
+
+        async function loadTaskComments(taskId) {
+            try {
+                var resp = await fetch('/Manager/GetTaskComments?taskId=' + taskId);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                var comments = await resp.json();
+                renderComments(comments, 'taskCommentDrawerBody');
+            } catch (err) {
+                document.getElementById('taskCommentDrawerBody').innerHTML = renderError(err.message);
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        //  SUBTASK COMMENTS DRAWER  (NEW)
+        // ════════════════════════════════════════════════════════════════════
+
+        function openSubtaskCommentDrawer(subtaskId, subtaskTitle) {
+            // Keep the subtask drawer open behind — just swap to the comment drawer
+            document.getElementById('subtaskDrawer').classList.remove('open');
+            document.getElementById('subtaskCommentDrawerTitle').textContent = 'Comments';
+            document.getElementById('subtaskCommentDrawerSub').textContent   = subtaskTitle;
+            document.getElementById('subtaskCommentDrawerBody').innerHTML    = renderLoading('#e67e22');
+            // overlay already open
+            document.getElementById('subtaskCommentDrawer').classList.add('open');
+            loadSubtaskComments(subtaskId);
+        }
+
+        async function loadSubtaskComments(subtaskId) {
+            try {
+                var resp = await fetch('/Manager/GetSubtaskComments?subtaskId=' + subtaskId);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                var comments = await resp.json();
+                renderComments(comments, 'subtaskCommentDrawerBody');
+            } catch (err) {
+                document.getElementById('subtaskCommentDrawerBody').innerHTML = renderError(err.message);
+            }
+        }
+
+        // ── Shared comment renderer ───────────────────────────────────────────
+
+        function renderComments(list, bodyId) {
+            if (!list || list.length === 0) {
+                document.getElementById(bodyId).innerHTML =
+                    '<div class="drawer-state">'
+                    + '<span class="drawer-state-icon">&#128172;</span>'
+                    + '<span>No comments yet.</span>'
+                    + '</div>';
+                return;
+            }
+
+            var html = '<p style="font-size:12px;color:#aaa;margin-bottom:14px;">'
+                     + list.length + ' comment' + (list.length !== 1 ? 's' : '') + '</p>';
+
+            list.forEach(function (c) {
+                var dt = new Date(c.createdAt);
+                var formatted = dt.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+                              + ' ' + dt.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+
+                html += '<div class="comment-card">'
+                      + '<div class="comment-author">&#128100; ' + esc(c.authorName) + '</div>'
+                      + '<div class="comment-body">' + esc(c.content) + '</div>'
+                      + '<div class="comment-time">&#128336; ' + formatted + '</div>'
+                      + '</div>';
+            });
+
+            document.getElementById(bodyId).innerHTML = html;
+        }
+
+        // ── Shared helpers ────────────────────────────────────────────────────
+
+        function renderLoading(ringColor) {
+            var style = ringColor ? 'border-top-color:' + ringColor + ';' : '';
+            return '<div class="drawer-state"><div class="spin-ring" style="' + style + '"></div>'
+                 + '<span>Loading…</span></div>';
+        }
+
+        function renderError(msg) {
+            return '<div class="drawer-state">'
+                 + '<span class="drawer-state-icon">&#9888;</span>'
+                 + '<span>Could not load data.</span>'
+                 + '<small style="color:#ccc;">' + esc(msg) + '</small>'
+                 + '</div>';
         }
 
         function statusDotClass(s) {
@@ -872,10 +1066,8 @@
 
         function esc(str) {
             return String(str)
-                .replace(/&/g,  '&amp;')
-                .replace(/</g,  '&lt;')
-                .replace(/>/g,  '&gt;')
-                .replace(/"/g,  '&quot;');
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
     </script>
 }
