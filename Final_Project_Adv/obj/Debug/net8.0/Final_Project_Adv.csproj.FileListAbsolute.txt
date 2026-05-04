@@ -274,7 +274,6 @@ C:\Users\User\OneDrive\Desktop\advanced_Programming\Final_Project_Adv\obj\Debug\
 C:\Users\User\OneDrive\Desktop\advanced_Programming\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.genruntimeconfig.cache
 C:\Users\User\OneDrive\Desktop\advanced_Programming\Final_Project_Adv\obj\Debug\net8.0\ref\Final_Project_Adv.dll
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\BCrypt.Net-Next.dll
-C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.RazorAssemblyInfo.cache
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\Final_Project_Adv.RazorAssemblyInfo.cs
 C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Final_Project_Adv.staticwebassets.runtime.json
@@ -443,3 +442,7 @@ C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\obj\Debug\net8.0\ref\Final_
 C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
 C:\Users\User\OneDrive\Desktop\asf\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\USER\source\repos\Final_Project_Adv\Final_Project_Adv\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

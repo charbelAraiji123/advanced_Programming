@@ -29,7 +29,7 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddScoped<IAdminServices, AdminServices>();
 builder.Services.AddScoped<IManagerServices, ManagerServices>();
 builder.Services.AddScoped<IEmployeeServices, EmployeeServices>();
-
+builder.Services.AddScoped<ProgressService>();
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. JWT AUTHENTICATION
 // ─────────────────────────────────────────────────────────────────────────────
