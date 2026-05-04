@@ -32,6 +32,7 @@
         <div class="alert alert-success">@TempData["Success"]</div>
     }
 
+    <!-- Search Section -->
     <div class="mb-3">
         <label class="form-label">Task ID</label>
         <div class="input-group">
@@ -43,6 +44,7 @@
 
     <hr />
 
+    <!-- The Update Form (Hidden by default until search success) -->
     <form method="post" action="/Manager/UpdateTaskPost" id="editForm" style="display:none;">
         @Html.AntiForgeryToken()
         <input type="hidden" name="Id" id="hiddenId" />
@@ -95,6 +97,7 @@
     </form>
 </div>
 
+<!-- Data bridges for Server-to-JS communication -->
 <span id="srv-errors" style="display:none">@(hasErrors ? "1" : "0")</span>
 <span id="srv-id" style="display:none">@postedId</span>
 <span id="srv-title" style="display:none">@postedTitle</span>
@@ -132,7 +135,7 @@
                     task.description,
                     task.status,
                     task.departmentId,
-                    task.assignedUserId   // may be null
+                    task.assignedUserId
                 );
                 feedback.textContent = 'Task "' + task.title + '" found.';
                 feedback.className   = 'form-text text-success';
@@ -162,7 +165,7 @@
             if (statusEl.options[i].value === status) { statusEl.selectedIndex = i; break; }
         }
 
-        // Department — set value then load employees for that dept
+        // Department
         var deptEl = document.getElementById('fDept');
         for (var i = 0; i < deptEl.options.length; i++) {
             if (parseInt(deptEl.options[i].value) === parseInt(deptId)) {
@@ -180,14 +183,12 @@
         await loadEmployees(sel.value, null);
     }
 
-    // ─── Fetch employees for a department and populate assignee dropdown ──────
+    // ─── Fetch employees for a department ─────────────────────────────────────
     async function loadEmployees(deptId, selectedUserId) {
         var assigneeEl      = document.getElementById('fAssignee');
         var assigneeFb      = document.getElementById('assigneeFeedback');
 
-        // Reset to just the "Unassigned" option while loading
         assigneeEl.innerHTML = '<option value="">— Unassigned —</option>';
-
         if (!deptId || parseInt(deptId) <= 0) return;
 
         assigneeFb.textContent = 'Loading members…';
@@ -208,7 +209,6 @@
                 assigneeEl.appendChild(opt);
             });
 
-            // Pre-select the current assignee if one exists
             if (selectedUserId) {
                 for (var i = 0; i < assigneeEl.options.length; i++) {
                     if (parseInt(assigneeEl.options[i].value) === parseInt(selectedUserId)) {
@@ -217,7 +217,6 @@
                     }
                 }
             }
-
             assigneeFb.textContent = '';
         } catch (e) {
             assigneeFb.textContent = 'Failed to load members.';

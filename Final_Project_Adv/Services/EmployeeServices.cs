@@ -12,7 +12,10 @@ namespace Final_Project_Adv.Services
         private readonly AuditService auditService;
         private readonly PermissionService permissionService;
 
-        public EmployeeServices(AppDbContext context, AuditService auditService, PermissionService permissionService)
+        public EmployeeServices(
+            AppDbContext context,
+            AuditService auditService,
+            PermissionService permissionService)
         {
             this.context = context;
             this.auditService = auditService;
@@ -28,9 +31,14 @@ namespace Final_Project_Adv.Services
             return await context.TaskAssignment
                 .Where(a => a.UserId == userId)
                 .Select(a => new TaskItemDto(
-                    a.TaskItem.Id, a.TaskItem.Title, a.TaskItem.Description,
-                    a.TaskItem.Status, a.TaskItem.CreatedById, a.TaskItem.DepartmentId,
-                    a.TaskItem.CreatedAt, a.TaskItem.UpdatedAt))
+                    a.TaskItem.Id,
+                    a.TaskItem.Title,
+                    a.TaskItem.Description,
+                    a.TaskItem.Status,
+                    a.TaskItem.CreatedById,
+                    a.TaskItem.DepartmentId,
+                    a.TaskItem.CreatedAt,
+                    a.TaskItem.UpdatedAt))
                 .ToListAsync();
         }
 
@@ -45,8 +53,30 @@ namespace Final_Project_Adv.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<SubtaskDto>> GetMySubtasksForTaskAsync(int userId, int taskItemId)
+        {
+            return await context.Subtask
+                .Where(s => s.AssignedToId == userId && s.TaskItemId == taskItemId)
+                .Select(s => new SubtaskDto(
+                    s.Id, s.Title, s.Description, s.Status,
+                    s.TaskItemId, s.AssignedToId, s.CreatedById,
+                    s.CreatedAt, s.UpdatedAt))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SubtaskDto>> GetUnassignedSubtasksForTaskAsync(int taskItemId)
+        {
+            return await context.Subtask
+                .Where(s => s.TaskItemId == taskItemId && s.AssignedToId == null)
+                .Select(s => new SubtaskDto(
+                    s.Id, s.Title, s.Description, s.Status,
+                    s.TaskItemId, s.AssignedToId, s.CreatedById,
+                    s.CreatedAt, s.UpdatedAt))
+                .ToListAsync();
+        }
+
         // ─────────────────────────────────────────────────────────────────────
-        // ACCEPT  (Pending → InProgress)
+        // ACCEPT TASK  (Pending → InProgress)
         // ─────────────────────────────────────────────────────────────────────
 
         public async Task<bool> AcceptTaskAsync(int taskId)
@@ -81,7 +111,7 @@ namespace Final_Project_Adv.Services
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // SUBMIT  (→ Completed)
+        // SUBMIT TASK  (→ Completed)
         // ─────────────────────────────────────────────────────────────────────
 
         public async Task<bool> SubmitTaskAsync(int taskId)
@@ -115,6 +145,10 @@ namespace Final_Project_Adv.Services
             return true;
         }
 
+        // ─────────────────────────────────────────────────────────────────────
+        // SUBMIT SUBTASK  (→ Completed)
+        // ─────────────────────────────────────────────────────────────────────
+
         public async Task<bool> SubmitSubtaskAsync(int subtaskId)
         {
             var subtask = await context.Subtask.FindAsync(subtaskId);
@@ -145,6 +179,124 @@ namespace Final_Project_Adv.Services
                 subtask.CreatedById);
 
             return true;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // ACCEPT SUBTASK  (Pending → InProgress; self-assigns if unassigned)
+        // ─────────────────────────────────────────────────────────────────────
+
+        public async Task<bool> AcceptSubtaskAsync(int subtaskId, int userId)
+        {
+            var subtask = await context.Subtask.FindAsync(subtaskId);
+            if (subtask == null) return false;
+
+            if (subtask.Status != Domain.Enums.TaskStatus.Pending)
+                throw new InvalidOperationException("Only pending subtasks can be accepted.");
+
+            var old = new { subtask.Id, Status = subtask.Status.ToString(), subtask.AssignedToId };
+
+            subtask.Status = Domain.Enums.TaskStatus.InProgress;
+            subtask.UpdatedAt = DateTime.UtcNow;
+
+            // If unassigned, claim it for the accepting user
+            if (subtask.AssignedToId == null)
+                subtask.AssignedToId = userId;
+
+            await context.SaveChangesAsync();
+
+            await auditService.LogAsync(
+                "SubtaskAccepted", "Subtask", subtask.Id,
+                old,
+                new
+                {
+                    subtask.Id,
+                    subtask.Title,
+                    Status = subtask.Status.ToString(),
+                    subtask.TaskItemId,
+                    subtask.AssignedToId,
+                    subtask.CreatedById
+                },
+                userId);
+
+            return true;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // CREATE SUBTASK
+        // ─────────────────────────────────────────────────────────────────────
+
+        public async Task<SubtaskDto> CreateSubtaskAsync(CreateSubtaskDto dto)
+        {
+            // 1. Parent task must exist and be InProgress
+            var parentTask = await context.TaskItem.FindAsync(dto.TaskItemId);
+
+            if (parentTask == null)
+                throw new KeyNotFoundException(
+                    $"Task with ID {dto.TaskItemId} does not exist.");
+
+            if (parentTask.Status != Domain.Enums.TaskStatus.InProgress)
+                throw new InvalidOperationException(
+                    "Subtasks can only be added to tasks that are In Progress.");
+
+            // 2. Optional assignee must belong to the same department
+            if (dto.AssignedToId.HasValue)
+            {
+                var assignee = await context.Users
+                    .FirstOrDefaultAsync(u => u.Id == dto.AssignedToId.Value);
+
+                if (assignee == null)
+                    throw new KeyNotFoundException(
+                        $"User with ID {dto.AssignedToId} does not exist.");
+
+                if (assignee.DepartmentId != parentTask.DepartmentId)
+                    throw new InvalidOperationException(
+                        "The assignee must belong to the same department as the task.");
+            }
+
+            // 3. Persist
+            var subtask = new Subtask
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Status = Domain.Enums.TaskStatus.Pending,
+                TaskItemId = dto.TaskItemId,
+                CreatedById = dto.CreatedById,
+                AssignedToId = dto.AssignedToId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            context.Subtask.Add(subtask);
+            await context.SaveChangesAsync();
+
+            // 4. Audit log
+            await auditService.LogAsync(
+                action: "SubtaskCreated",
+                entityType: "Subtask",
+                entityId: subtask.Id,
+                oldValue: null,
+                newValue: new
+                {
+                    subtask.Id,
+                    subtask.Title,
+                    subtask.Description,
+                    Status = subtask.Status.ToString(),
+                    subtask.TaskItemId,
+                    subtask.CreatedById,
+                    AssignedToId = subtask.AssignedToId
+                },
+                performedById: dto.CreatedById);
+
+            return new SubtaskDto(
+                subtask.Id,
+                subtask.Title,
+                subtask.Description,
+                subtask.Status,
+                subtask.TaskItemId,
+                subtask.AssignedToId,
+                subtask.CreatedById,
+                subtask.CreatedAt,
+                subtask.UpdatedAt);
         }
 
         // ─────────────────────────────────────────────────────────────────────

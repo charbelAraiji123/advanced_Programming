@@ -55,6 +55,41 @@ namespace Final_Project_Adv.Controllers
         }
 
         // ─────────────────────────────────────────────────────────────────────
+        // GET SUBTASKS FOR A TASK  (JSON — used by the drawer)
+        // ─────────────────────────────────────────────────────────────────────
+
+        [HttpGet("GetSubtasks")]
+        public async Task<IActionResult> GetSubtasks(int taskId)
+        {
+            if (taskId <= 0)
+                return BadRequest(new { message = "taskId must be a positive integer." });
+
+            var taskExists = await _context.TaskItem.AnyAsync(t => t.Id == taskId);
+            if (!taskExists)
+                return NotFound(new { message = $"No task found with ID {taskId}." });
+
+            var subtasks = await _context.Subtask
+                .Where(s => s.TaskItemId == taskId)
+                .OrderBy(s => s.CreatedAt)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    Status = s.Status.ToString(),
+                    s.TaskItemId,
+                    s.AssignedToId,
+                    AssignedToName = s.AssignedTo != null ? s.AssignedTo.Username : null,
+                    s.CreatedById,
+                    s.CreatedAt,
+                    s.UpdatedAt
+                })
+                .ToListAsync();
+
+            return Ok(subtasks);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         // CREATE TASK
         // ─────────────────────────────────────────────────────────────────────
 
@@ -165,7 +200,6 @@ namespace Final_Project_Adv.Controllers
         // UPDATE TASK
         // ─────────────────────────────────────────────────────────────────────
 
-        // Now also returns the current assignedUserId so the view can pre-select it.
         [HttpGet("GetTask")]
         public async Task<IActionResult> GetTask(int id)
         {
@@ -181,7 +215,6 @@ namespace Final_Project_Adv.Controllers
                     t.Description,
                     Status = t.Status.ToString(),
                     t.DepartmentId,
-                    // Pull the current assignee from TaskAssignment (null if unassigned)
                     AssignedUserId = (int?)t.TaskAssignments.FirstOrDefault()!.UserId
                 })
                 .FirstOrDefaultAsync();
@@ -199,6 +232,53 @@ namespace Final_Project_Adv.Controllers
             return View();
         }
 
+        // Add these two actions inside the ManagerController class,
+        // after the existing GetSubtasks action.
+
+        // ── GET /Manager/GetTaskComments?taskId=X ─────────────────────────────────
+
+        [HttpGet("GetTaskComments")]
+        public async Task<IActionResult> GetTaskComments(int taskId)
+        {
+            if (taskId <= 0) return BadRequest(new { message = "Invalid taskId." });
+
+            var comments = await _context.TaskComment
+                .Where(c => c.TaskItemId == taskId)
+                .OrderBy(c => c.CreatedAt)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Content,
+                    AuthorName = c.Author.Username,
+                    c.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(comments);
+        }
+
+        // ── GET /Manager/GetSubtaskComments?subtaskId=X ───────────────────────────
+
+        [HttpGet("GetSubtaskComments")]
+        public async Task<IActionResult> GetSubtaskComments(int subtaskId)
+        {
+            if (subtaskId <= 0) return BadRequest(new { message = "Invalid subtaskId." });
+
+            var comments = await _context.SubtaskComment
+                .Where(c => c.SubtaskId == subtaskId)
+                .OrderBy(c => c.CreatedAt)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Content,
+                    AuthorName = c.Author.Username,
+                    c.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(comments);
+        }
+
         [HttpPost("UpdateTaskPost")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateTaskPost()
@@ -210,7 +290,6 @@ namespace Final_Project_Adv.Controllers
             var description = Request.Form["Description"].ToString().Trim();
             var status = Request.Form["Status"].ToString();
             var deptIdStr = Request.Form["DepartmentId"].ToString();
-            // Empty string means "unassign"; a number means reassign to that user.
             var assigneeStr = Request.Form["AssignedUserId"].ToString();
 
             int managerId = GetCurrentUserId();
@@ -280,18 +359,16 @@ namespace Final_Project_Adv.Controllers
                 return ReturnWithErrors();
             }
 
-            // Parse the optional new assignee (null = unassign)
             int? newAssigneeId = int.TryParse(assigneeStr, out int parsedAssignee) && parsedAssignee > 0
                 ? parsedAssignee
                 : null;
 
-            // If a specific user was chosen, make sure they exist
             if (newAssigneeId.HasValue)
             {
                 var assigneeExists = await _context.Users.AnyAsync(u => u.Id == newAssigneeId.Value);
                 if (!assigneeExists)
                 {
-                    ModelState.AddModelError("", $"Selected user does not exist.");
+                    ModelState.AddModelError("", "Selected user does not exist.");
                     return ReturnWithErrors();
                 }
             }
@@ -312,12 +389,10 @@ namespace Final_Project_Adv.Controllers
                     .FirstOrDefaultAsync(a => a.TaskItemId == taskId);
 
                 int? oldAssigneeId = existingAssignment?.UserId;
-
                 bool assignmentChanged = newAssigneeId != oldAssigneeId;
 
                 if (assignmentChanged)
                 {
-                    // Remove old assignment if one exists
                     if (existingAssignment != null)
                     {
                         _context.TaskAssignment.Remove(existingAssignment);
@@ -330,16 +405,14 @@ namespace Final_Project_Adv.Controllers
                             managerId);
                     }
 
-                    // Create new assignment if a user was chosen
                     if (newAssigneeId.HasValue)
                     {
-                        var assignment = new TaskAssignment
+                        _context.TaskAssignment.Add(new TaskAssignment
                         {
                             TaskItemId = taskId,
                             UserId = newAssigneeId.Value,
                             AssignedAt = DateTime.UtcNow
-                        };
-                        _context.TaskAssignment.Add(assignment);
+                        });
                         await _context.SaveChangesAsync();
 
                         await _auditService.LogAsync(
