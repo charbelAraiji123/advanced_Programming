@@ -66,7 +66,15 @@ namespace Final_Project_Adv.Controllers
         {
             if (!IsAdmin()) return Unauthorized();
             var users = await _context.Users
-                .Select(u => new { u.Id, u.Username, u.Email, u.Role })
+                .Include(u => u.Department)           // ← add this
+                .Select(u => new {
+                    u.Id,
+                    u.Username,
+                    u.Email,
+                    u.Role,
+                    u.DepartmentId,
+                    DepartmentName = u.Department.Name  // ← and this
+                })
                 .ToListAsync();
             return Ok(users);
         }
