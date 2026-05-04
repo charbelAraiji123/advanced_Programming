@@ -32,6 +32,9 @@ namespace Final_Project_Adv.Models
         //  Audit
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        // Inside the Users class, add:
+        public List<UserPermission> Permissions { get; set; } = new();
+        public List<UserPermission> PermissionsGranted { get; set; } = new();
     }
 
 

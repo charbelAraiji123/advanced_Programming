@@ -1,0 +1,247 @@
+﻿@{
+    ViewData["Title"] = "Update Task";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var hasErrors = !ViewData.ModelState.IsValid && (bool)(ViewBag.HasFormErrors ?? false);
+    var postedId = (string)(ViewBag.PostedId ?? "");
+    var postedTitle = (string)(ViewBag.PostedTitle ?? "");
+    var postedDesc = (string)(ViewBag.PostedDesc ?? "");
+    var postedStatus = (string)(ViewBag.PostedStatus ?? "");
+    var postedDept = (string)(ViewBag.PostedDept ?? "");
+    var postedAssignee = (string)(ViewBag.PostedAssignee ?? "");
+}
+
+<div class="container mt-4" style="max-width:560px;">
+    <h2>Update Task</h2>
+    <p class="text-muted">Search a task by ID, modify its details, then save.</p>
+
+    @if (hasErrors)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@err.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <!-- Search Section -->
+    <div class="mb-3">
+        <label class="form-label">Task ID</label>
+        <div class="input-group">
+            <input type="number" id="searchId" class="form-control" placeholder="Enter Task ID" min="1" />
+            <button class="btn btn-outline-secondary" onclick="searchTask()" id="btnSearch">Search</button>
+        </div>
+        <small id="searchFeedback" class="form-text"></small>
+    </div>
+
+    <hr />
+
+    <!-- The Update Form (Hidden by default until search success) -->
+    <form method="post" action="/Manager/UpdateTaskPost" id="editForm" style="display:none;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" id="hiddenId" />
+
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" name="Title" id="fTitle" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="Description" id="fDesc" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select name="Status" id="fStatus" class="form-select">
+                <option value="">-- Select Status --</option>
+                <option value="Pending">Pending</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Completed">Completed</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select name="DepartmentId" id="fDept" class="form-select" onchange="onDeptChange(this)">
+                <option value="">-- Select Department --</option>
+                @foreach (var dept in (ViewBag.Departments as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+                                ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>()))
+                {
+                    <option value="@dept.Value">@dept.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">
+                Assigned To
+                <span class="text-muted fw-normal" style="font-size:.82rem;">(optional — leave blank to unassign)</span>
+            </label>
+            <select name="AssignedUserId" id="fAssignee" class="form-select">
+                <option value="">— Unassigned —</option>
+            </select>
+            <small id="assigneeFeedback" class="form-text text-muted"></small>
+        </div>
+
+        <button type="submit" class="btn btn-warning">Save Changes</button>
+        <a href="/Manager/Dashboard" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>
+
+<!-- Data bridges for Server-to-JS communication -->
+<span id="srv-errors" style="display:none">@(hasErrors ? "1" : "0")</span>
+<span id="srv-id" style="display:none">@postedId</span>
+<span id="srv-title" style="display:none">@postedTitle</span>
+<span id="srv-desc" style="display:none">@postedDesc</span>
+<span id="srv-status" style="display:none">@postedStatus</span>
+<span id="srv-dept" style="display:none">@postedDept</span>
+<span id="srv-assignee" style="display:none">@postedAssignee</span>
+
+<script>
+    // ─── Search task by ID ────────────────────────────────────────────────────
+    async function searchTask() {
+        var id       = document.getElementById('searchId').value.trim();
+        var feedback = document.getElementById('searchFeedback');
+        var editForm = document.getElementById('editForm');
+
+        if (!id || parseInt(id) <= 0) {
+            feedback.textContent = 'Please enter a valid Task ID.';
+            feedback.className   = 'form-text text-danger';
+            return;
+        }
+
+        document.getElementById('btnSearch').disabled = true;
+        feedback.textContent = 'Searching...';
+        feedback.className   = 'form-text text-muted';
+        editForm.style.display = 'none';
+
+        try {
+            var resp = await fetch('/Manager/GetTask?id=' + id, { headers: { 'Accept': 'application/json' } });
+
+            if (resp.ok) {
+                var task = await resp.json();
+                await populateForm(
+                    task.id,
+                    task.title,
+                    task.description,
+                    task.status,
+                    task.departmentId,
+                    task.assignedUserId
+                );
+                feedback.textContent = 'Task "' + task.title + '" found.';
+                feedback.className   = 'form-text text-success';
+                editForm.style.display = 'block';
+            } else {
+                var data = await resp.json().catch(function () { return {}; });
+                feedback.textContent = data.message || 'No task found with ID ' + id + '.';
+                feedback.className   = 'form-text text-danger';
+            }
+        } catch (e) {
+            feedback.textContent = 'Network error. Please try again.';
+            feedback.className   = 'form-text text-danger';
+        } finally {
+            document.getElementById('btnSearch').disabled = false;
+        }
+    }
+
+    // ─── Populate form fields ─────────────────────────────────────────────────
+    async function populateForm(id, title, description, status, deptId, assignedUserId) {
+        document.getElementById('hiddenId').value = id;
+        document.getElementById('fTitle').value   = title;
+        document.getElementById('fDesc').value    = description || '';
+
+        // Status
+        var statusEl = document.getElementById('fStatus');
+        for (var i = 0; i < statusEl.options.length; i++) {
+            if (statusEl.options[i].value === status) { statusEl.selectedIndex = i; break; }
+        }
+
+        // Department
+        var deptEl = document.getElementById('fDept');
+        for (var i = 0; i < deptEl.options.length; i++) {
+            if (parseInt(deptEl.options[i].value) === parseInt(deptId)) {
+                deptEl.selectedIndex = i;
+                break;
+            }
+        }
+
+        // Load employees for the selected department, then set current assignee
+        await loadEmployees(deptId, assignedUserId);
+    }
+
+    // ─── Reload employees when department changes ─────────────────────────────
+    async function onDeptChange(sel) {
+        await loadEmployees(sel.value, null);
+    }
+
+    // ─── Fetch employees for a department ─────────────────────────────────────
+    async function loadEmployees(deptId, selectedUserId) {
+        var assigneeEl      = document.getElementById('fAssignee');
+        var assigneeFb      = document.getElementById('assigneeFeedback');
+
+        assigneeEl.innerHTML = '<option value="">— Unassigned —</option>';
+        if (!deptId || parseInt(deptId) <= 0) return;
+
+        assigneeFb.textContent = 'Loading members…';
+
+        try {
+            var resp      = await fetch('/Manager/GetEmployeesByDept?deptId=' + deptId);
+            var employees = await resp.json();
+
+            if (employees.length === 0) {
+                assigneeFb.textContent = 'No members in this department.';
+                return;
+            }
+
+            employees.forEach(function (e) {
+                var opt        = document.createElement('option');
+                opt.value      = e.id;
+                opt.textContent = e.username + ' (' + e.role + ') — ' + e.taskCount + '/2 tasks';
+                assigneeEl.appendChild(opt);
+            });
+
+            if (selectedUserId) {
+                for (var i = 0; i < assigneeEl.options.length; i++) {
+                    if (parseInt(assigneeEl.options[i].value) === parseInt(selectedUserId)) {
+                        assigneeEl.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            assigneeFb.textContent = '';
+        } catch (e) {
+            assigneeFb.textContent = 'Failed to load members.';
+        }
+    }
+
+    // ─── Enter key triggers search ────────────────────────────────────────────
+    document.getElementById('searchId').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); searchTask(); }
+    });
+
+    // ─── Restore form after server-side validation error ─────────────────────
+    (async function () {
+        if (document.getElementById('srv-errors').textContent.trim() !== '1') return;
+
+        var id       = document.getElementById('srv-id').textContent.trim();
+        var title    = document.getElementById('srv-title').textContent.trim();
+        var desc     = document.getElementById('srv-desc').textContent.trim();
+        var status   = document.getElementById('srv-status').textContent.trim();
+        var dept     = document.getElementById('srv-dept').textContent.trim();
+        var assignee = document.getElementById('srv-assignee').textContent.trim();
+
+        if (!id) return;
+
+        await populateForm(id, title, desc, status, dept, assignee || null);
+        document.getElementById('editForm').style.display = 'block';
+    })();
+</script>

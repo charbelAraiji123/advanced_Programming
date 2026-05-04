@@ -1,14 +1,35 @@
 ﻿@{
-    ViewData["Title"] = "Home";
-    Layout = null;
+    ViewData["Title"] = "Home Page";
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Home</title>
-</head>
-<body>
-    <h1>Welcome! You are logged in.</h1>
-</body>
-</html>
+<div class="text-center" style="margin-top: 50px; font-family: 'DM Sans', sans-serif;">
+    <h1 class="display-4">Hello, @ViewBag.Role!</h1>
+    <p>Welcome back, <strong>@ViewBag.Username</strong>.</p>
+
+    <hr />
+
+    @if (ViewBag.Role == "Admin")
+    {
+        <div class="alert alert-danger">
+            <strong>Admin Dashboard:</strong> You have full access to system settings.
+        </div>
+        <a href="/api/Admin/Users/Create" class="btn btn-primary">Manage Users</a>
+    }
+    else if (ViewBag.Role == "Manager")
+    {
+        <div class="alert alert-info">
+            <strong>Manager Portal:</strong> You can manage your department tasks here.
+        </div>
+        <a href="/api/Manager/Task/Create" class="btn btn-success">View Tasks</a>
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+            <strong>Citizen View:</strong> You can view your assigned tasks.
+        </div>
+    }
+
+    <div style="margin-top: 20px;">
+        <a asp-controller="Account" asp-action="Logout" class="btn btn-outline-danger">Logout</a>
+    </div>
+</div>

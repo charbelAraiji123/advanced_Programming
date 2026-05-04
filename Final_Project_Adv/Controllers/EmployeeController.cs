@@ -1,15 +1,11 @@
 ﻿using Final_Project_Adv.Domain.DTO;
-
-using Final_Project_Adv.Services.Final_Project_Adv.Services;
-using Microsoft.AspNetCore.Authorization;
+using Final_Project_Adv.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Final_Project_Adv.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize(Roles = "Employee")]
-    public class EmployeeController : ControllerBase
+    [Route("Employee")]
+    public class EmployeeController : Controller
     {
         private readonly IEmployeeServices _employeeServices;
 
@@ -18,73 +14,174 @@ namespace Final_Project_Adv.Controllers
             _employeeServices = employeeServices;
         }
 
-        // ================= TASKS =================
-
-        [HttpGet("MyTasks/{userId}")]
-        public async Task<IActionResult> GetMyTasks(int userId)
+        private int GetCurrentUserId()
         {
-            var tasks = await _employeeServices.GetMyTasksAsync(userId);
-            return Ok(tasks);
+            var idStr = HttpContext.Session.GetString("UserId");
+            return int.TryParse(idStr, out int id) ? id : 0;
         }
 
-        [HttpGet("MySubtasks/{userId}")]
-        public async Task<IActionResult> GetMySubtasks(int userId)
+        private string? GetCurrentUserRole() =>
+            HttpContext.Session.GetString("UserRole");
+
+        [HttpGet("ViewTask")]
+        public async Task<IActionResult> ViewTask()
         {
-            var subtasks = await _employeeServices.GetMySubtasksAsync(userId);
-            return Ok(subtasks);
+            var role = GetCurrentUserRole();
+            if (role is not ("Employee" or "Manager"))
+                return RedirectToAction("Login", "Account");
+
+            var tasks = await _employeeServices.GetMyTasksAsync(GetCurrentUserId());
+            return View(tasks);
         }
 
-        // ================= SUBMIT =================
-
-        [HttpPut("SubmitTask/{taskId}")]
-        public async Task<IActionResult> SubmitTask(int taskId)
+        [HttpPost("AcceptTask")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AcceptTask(int taskId)
         {
-            var result = await _employeeServices.SubmitTaskAsync(taskId);
-
-            if (!result)
-                return NotFound(new { message = "Task not found" });
-
-            return Ok(new { message = "Task submitted successfully" });
+            try
+            {
+                var result = await _employeeServices.AcceptTaskAsync(taskId);
+                if (!result) TempData["Error"] = "Task not found.";
+                else TempData["Success"] = "Task accepted — it is now In Progress.";
+            }
+            catch (InvalidOperationException ex) { TempData["Error"] = ex.Message; }
+            return RedirectToAction("ViewTask");
         }
 
-        [HttpPut("SubmitSubtask/{subtaskId}")]
-        public async Task<IActionResult> SubmitSubtask(int subtaskId)
+        [HttpGet("GetSubtasksForTask")]
+        public async Task<IActionResult> GetSubtasksForTask(int taskItemId)
         {
-            var result = await _employeeServices.SubmitSubtaskAsync(subtaskId);
+            var userId = GetCurrentUserId();
+            if (userId == 0) return Unauthorized();
 
-            if (!result)
-                return NotFound(new { message = "Subtask not found" });
+            var mine = await _employeeServices.GetMySubtasksForTaskAsync(userId, taskItemId);
+            var unassigned = await _employeeServices.GetUnassignedSubtasksForTaskAsync(taskItemId);
 
-            return Ok(new { message = "Subtask submitted successfully" });
+            return Json(new
+            {
+                mine = mine.Select(s => new {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    Status = s.Status.ToString(),
+                    s.TaskItemId,
+                    s.AssignedToId
+                }),
+                unassigned = unassigned.Select(s => new {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    Status = s.Status.ToString(),
+                    s.TaskItemId,
+                    s.AssignedToId
+                })
+            });
         }
 
-        // ================= REQUEST TASK =================
-
-        [HttpPost("RequestTask/{userId}/{taskId}")]
-        public async Task<IActionResult> RequestTask(int userId, int taskId)
+        [HttpPost("AcceptSubtask")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AcceptSubtask(int subtaskId)
         {
-            var success = await _employeeServices.RequestTaskAssignmentAsync(userId, taskId);
-
-            if (!success)
-                return BadRequest(new { message = "Already assigned or request exists" });
-
-            return Ok(new { message = "Request submitted successfully" });
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Login", "Account");
+            try
+            {
+                var result = await _employeeServices.AcceptSubtaskAsync(subtaskId, userId);
+                if (!result) TempData["Error"] = "Subtask not found.";
+                else TempData["Success"] = "Subtask accepted — it is now In Progress.";
+            }
+            catch (InvalidOperationException ex) { TempData["Error"] = ex.Message; }
+            return RedirectToAction("ViewTask");
         }
 
-        // ================= COMMENTS =================
-
-        [HttpPost("TaskComment")]
-        public async Task<IActionResult> AddTaskComment([FromBody] CreateTaskCommentDto dto)
+        [HttpPost("CreateSubtask")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSubtask(
+            string title, string? description, int taskItemId, int? assignedToId)
         {
-            var result = await _employeeServices.AddTaskCommentAsync(dto);
-            return CreatedAtAction(nameof(AddTaskComment), new { id = result.Id }, result);
+            var role = GetCurrentUserRole();
+            if (role is not ("Employee" or "Manager"))
+                return RedirectToAction("Login", "Account");
+
+            if (string.IsNullOrWhiteSpace(title))
+            { TempData["Error"] = "Subtask title is required."; return RedirectToAction("ViewTask"); }
+
+            if (taskItemId <= 0)
+            { TempData["Error"] = "Invalid task reference."; return RedirectToAction("ViewTask"); }
+
+            try
+            {
+                var dto = new CreateSubtaskDto(
+                    title.Trim(),
+                    description?.Trim() ?? string.Empty,
+                    taskItemId,
+                    GetCurrentUserId(),
+                    assignedToId > 0 ? assignedToId : null);
+
+                await _employeeServices.CreateSubtaskAsync(dto);
+                TempData["Success"] = $"Subtask \"{title.Trim()}\" created successfully.";
+            }
+            catch (KeyNotFoundException ex) { TempData["Error"] = ex.Message; }
+            catch (InvalidOperationException ex) { TempData["Error"] = ex.Message; }
+            catch (Exception ex) { TempData["Error"] = $"Unexpected error: {ex.Message}"; }
+
+            return RedirectToAction("ViewTask");
         }
 
-        [HttpPost("SubtaskComment")]
-        public async Task<IActionResult> AddSubtaskComment([FromBody] CreateSubtaskCommentDto dto)
+        // ── POST /Employee/PostTaskComment ────────────────────────────────────
+
+        [HttpPost("PostTaskComment")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PostTaskComment(int taskItemId, string content)
         {
-            var result = await _employeeServices.AddSubtaskCommentAsync(dto);
-            return CreatedAtAction(nameof(AddSubtaskComment), new { id = result.Id }, result);
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Login", "Account");
+
+            if (string.IsNullOrWhiteSpace(content))
+            { TempData["Error"] = "Comment cannot be empty."; return RedirectToAction("ViewTask"); }
+
+            try
+            {
+                await _employeeServices.AddTaskCommentAsync(new CreateTaskCommentDto
+                {
+                    Content = content.Trim(),
+                    AuthorId = userId,
+                    TaskItemId = taskItemId
+                });
+                TempData["Success"] = "Comment posted.";
+            }
+            catch (UnauthorizedAccessException) { TempData["Error"] = "You do not have permission to add comments."; }
+            catch (Exception ex) { TempData["Error"] = $"Error: {ex.Message}"; }
+
+            return RedirectToAction("ViewTask");
+        }
+
+        // ── POST /Employee/PostSubtaskComment ─────────────────────────────────
+
+        [HttpPost("PostSubtaskComment")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PostSubtaskComment(int subtaskId, string content)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return RedirectToAction("Login", "Account");
+
+            if (string.IsNullOrWhiteSpace(content))
+            { TempData["Error"] = "Comment cannot be empty."; return RedirectToAction("ViewTask"); }
+
+            try
+            {
+                await _employeeServices.AddSubtaskCommentAsync(new CreateSubtaskCommentDto
+                {
+                    Content = content.Trim(),
+                    AuthorId = userId,
+                    SubtaskId = subtaskId
+                });
+                TempData["Success"] = "Comment posted.";
+            }
+            catch (UnauthorizedAccessException) { TempData["Error"] = "You do not have permission to add comments."; }
+            catch (Exception ex) { TempData["Error"] = $"Error: {ex.Message}"; }
+
+            return RedirectToAction("ViewTask");
         }
     }
 }

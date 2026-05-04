@@ -1,0 +1,256 @@
+﻿@{
+    ViewData["Title"] = "Delete User";
+}
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --delete-red: #dc2626;
+        --delete-hover: #b91c1c;
+        --bg-slate: #f8fafc;
+        --border-slate: #e2e8f0;
+        --text-slate: #1e293b;
+    }
+
+    body {
+        background-color: var(--bg-slate);
+        font-family: 'Inter', sans-serif;
+        color: var(--text-slate);
+    }
+
+    .delete-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid var(--border-slate);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        margin-top: 50px;
+    }
+
+        .delete-card h2 {
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 25px;
+            color: #991b1b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+    .search-section {
+        background: #f1f5f9;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 1px solid var(--border-slate);
+    }
+
+    #userCard {
+        background: #fff5f5;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 20px;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .info-group {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(220, 38, 38, 0.1);
+    }
+
+        .info-group:last-of-type {
+            border-bottom: none;
+            margin-bottom: 15px;
+        }
+
+    .info-label {
+        font-weight: 600;
+        color: #7f1d1d;
+        font-size: 0.9rem;
+    }
+
+    .info-value {
+        color: #450a0a;
+        font-weight: 400;
+    }
+
+    .btn-confirm {
+        background-color: var(--delete-red);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+
+        .btn-confirm:hover {
+            background-color: var(--delete-hover);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+        }
+
+    .btn-cancel {
+        background-color: white;
+        color: #64748b;
+        border: 1px solid var(--border-slate);
+        font-weight: 500;
+        padding: 12px;
+        border-radius: 10px;
+    }
+
+        .btn-cancel:hover {
+            background-color: #f8fafc;
+            color: var(--text-slate);
+        }
+
+    /* Fixed by using double @@ to escape Razor */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="container" style="max-width: 550px;">
+    <div class="delete-card">
+        <h2><i class="fa-solid fa-user-minus"></i> Delete User</h2>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success border-0 shadow-sm fw-medium">
+                <i class="fa-solid fa-circle-check me-2"></i>@TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger border-0 shadow-sm fw-medium">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+            </div>
+        }
+
+        <div class="search-section">
+            <label class="form-label">Find User by ID</label>
+            <div class="input-group">
+                <input type="number" id="searchId" class="form-control shadow-sm" placeholder="e.g. 101" min="1" />
+                <button class="btn btn-dark px-4" onclick="searchUser()" id="btnSearch">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+            <small id="searchFeedback" class="form-text mt-2 d-block"></small>
+        </div>
+
+        <div id="userCard" style="display:none;">
+            <p class="text-danger small fw-bold mb-3 uppercase text-center" style="letter-spacing: 0.05em;">
+                <i class="fa-solid fa-circle-info me-1"></i> VERIFY DETAILS BEFORE DELETING
+            </p>
+
+            <div class="info-group">
+                <span class="info-label">ID</span>
+                <span class="info-value" id="dispId"></span>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Username</span>
+                <span class="info-value fw-bold" id="dispUsername"></span>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Email</span>
+                <span class="info-value" id="dispEmail"></span>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Role</span>
+                <span class="info-value" id="dispRole"></span>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Department</span>
+                <span class="info-value" id="dispDept"></span>
+            </div>
+
+            <form method="post" action="/Admin/DeleteUser" class="mt-4">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="hiddenId" />
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-confirm">
+                        <i class="fa-solid fa-trash-can me-2"></i> Permanently Delete
+                    </button>
+                    <a asp-action="UserManagement" asp-controller="AdminView" class="btn btn-cancel">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function searchUser() {
+        var id = document.getElementById('searchId').value.trim();
+        var feedback = document.getElementById('searchFeedback');
+        var userCard = document.getElementById('userCard');
+
+        if (!id || parseInt(id) <= 0) {
+            feedback.textContent = 'Please enter a valid User ID.';
+            feedback.className = 'form-text text-danger';
+            return;
+        }
+
+        document.getElementById('btnSearch').disabled = true;
+        feedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Searching...';
+        feedback.className = 'form-text text-muted';
+        userCard.style.display = 'none';
+
+        try {
+            var resp = await fetch('/Admin/GetUser?id=' + id, { headers: { 'Accept': 'application/json' } });
+
+            if (resp.ok) {
+                var user = await resp.json();
+                document.getElementById('dispId').textContent       = user.id;
+                document.getElementById('dispUsername').textContent = user.username;
+                document.getElementById('dispEmail').textContent    = user.email;
+                document.getElementById('dispRole').textContent     = user.role;
+                document.getElementById('dispDept').textContent     = user.departmentId;
+                document.getElementById('hiddenId').value           = user.id;
+                feedback.innerHTML = '<i class="fa-solid fa-check me-2"></i>User located.';
+                feedback.className = 'form-text text-success fw-medium';
+                userCard.style.display = 'block';
+            } else {
+                var data = await resp.json().catch(function () { return {}; });
+                feedback.textContent = data.message || 'No user found with ID ' + id + '.';
+                feedback.className = 'form-text text-danger';
+            }
+        } catch (e) {
+            feedback.textContent = 'Network error. Please try again.';
+            feedback.className = 'form-text text-danger';
+        } finally {
+            document.getElementById('btnSearch').disabled = false;
+        }
+    }
+
+    document.getElementById('searchId').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); searchUser(); }
+    });
+</script>
