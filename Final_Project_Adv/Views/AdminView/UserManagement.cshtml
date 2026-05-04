@@ -2,219 +2,787 @@
     ViewData["Title"] = "User Management";
 }
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
     :root {
         --primary: #4f46e5;
         --primary-hover: #4338ca;
+        --primary-light: #eef2ff;
         --danger: #ef4444;
+        --danger-light: #fef2f2;
         --success: #10b981;
-        --bg-main: #f8fafc;
-        --text-dark: #1e293b;
-        --text-muted: #64748b;
+        --success-light: #ecfdf5;
+        --warning: #f59e0b;
+        --warning-light: #fffbeb;
+        --bg: #f1f5f9;
+        --surface: #ffffff;
+        --border: #e2e8f0;
+        --border-hover: #cbd5e1;
+        --text: #0f172a;
+        --text-mid: #475569;
+        --text-muted: #94a3b8;
+        --radius: 10px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    *, *::before, *::after {
+        box-sizing: border-box;
     }
 
     body {
-        background-color: var(--bg-main);
-        font-family: 'Inter', sans-serif;
-        color: var(--text-dark);
+        background: var(--bg);
+        font-family: 'DM Sans', sans-serif;
+        color: var(--text);
+        margin: 0;
     }
 
-    /* Breadcrumb Styling */
+    /* ── Page shell ───────────────────────────────────────────── */
+    .um-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 24px 64px;
+    }
+
+    /* ── Breadcrumb ───────────────────────────────────────────── */
     .breadcrumb {
-        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .8rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: 28px;
+        list-style: none;
         padding: 0;
+    }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .breadcrumb a:hover {
+                text-decoration: underline;
+            }
+
+    .breadcrumb-sep {
+        color: var(--border-hover);
+    }
+
+    /* ── Page heading ─────────────────────────────────────────── */
+    .page-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+        .page-heading h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -.02em;
+            margin: 0;
+        }
+
+            .page-heading h1 span {
+                color: var(--primary);
+            }
+
+    /* ── Action row ───────────────────────────────────────────── */
+    .action-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
         margin-bottom: 20px;
     }
 
-    .breadcrumb-item a {
-        color: var(--primary);
-        text-decoration: none;
-        font-weight: 500;
-    }
-
-    /* Card & Header */
-    .management-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        overflow: hidden;
-    }
-
-    .card-header-flex {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 24px;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    /* Action Bar Styling */
-    .action-bar {
-        display: flex;
-        gap: 10px;
-        padding: 15px 24px;
-        background: #fdfdfd;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .btn-action {
+    .btn {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border-radius: 8px;
-        transition: all 0.2s;
-        border: 1px solid #e2e8f0;
-        background: white;
-        color: var(--text-dark);
+        gap: 7px;
+        padding: 9px 18px;
+        font-family: inherit;
+        font-size: .85rem;
+        font-weight: 600;
+        border-radius: var(--radius);
+        border: 1.5px solid var(--border);
+        background: var(--surface);
+        color: var(--text-mid);
+        cursor: pointer;
         text-decoration: none;
+        transition: background .15s, border-color .15s, color .15s, transform .1s, box-shadow .15s;
+        box-shadow: var(--shadow-sm);
     }
 
-        .btn-action:hover {
+        .btn:hover {
             background: #f8fafc;
             border-color: var(--primary);
             color: var(--primary);
             transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
-    .btn-create {
+    .btn-primary {
         background: var(--primary);
-        color: white !important;
         border-color: var(--primary);
+        color: #fff;
     }
 
-        .btn-create:hover {
+        .btn-primary:hover {
             background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            color: #fff;
         }
 
-    /* Table Styling */
-    .table-container {
-        padding: 0 24px 24px 24px;
+    .btn-danger {
+        color: var(--danger);
+        border-color: #fecaca;
     }
 
-    .table {
-        margin-bottom: 0;
+        .btn-danger:hover {
+            background: var(--danger-light);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+    /* ── Stats bar ────────────────────────────────────────────── */
+    .stats-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: .8rem;
+        font-weight: 600;
+        color: var(--text-mid);
+        box-shadow: var(--shadow-sm);
+    }
+
+        .stat-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .stat-chip .count {
+            color: var(--text);
+            font-size: .9rem;
+        }
+
+    /* ── Search bar ───────────────────────────────────────────── */
+    .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 220px;
+    }
+
+        .search-wrap i {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: .85rem;
+            pointer-events: none;
+        }
+
+    .search-input {
+        width: 100%;
+        padding: 9px 12px 9px 36px;
+        font-family: inherit;
+        font-size: .875rem;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        outline: none;
+        background: var(--surface);
+        color: var(--text);
+        transition: border-color .15s;
+    }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+    .filter-select {
+        padding: 9px 14px;
+        font-family: inherit;
+        font-size: .85rem;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--text);
+        outline: none;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+
+        .filter-select:focus {
+            border-color: var(--primary);
+        }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    /* ── Table ────────────────────────────────────────────────── */
+    .table-scroll {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .875rem;
+    }
+
+    thead th {
+        background: #f8fafc;
+        padding: 13px 18px;
+        text-align: left;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background .12s;
+    }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+    td {
+        padding: 14px 18px;
         vertical-align: middle;
     }
 
-        .table thead th {
-            background: #f8fafc;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            color: var(--text-muted);
-            border-top: none;
-            padding: 16px;
-        }
+    /* ── Avatar ───────────────────────────────────────────────── */
+    .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .78rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        letter-spacing: .02em;
+    }
 
-        .table tbody tr {
-            transition: background 0.2s;
-        }
-
-            .table tbody tr:hover {
-                background-color: #f1f5f9;
-            }
-
-        .table td {
-            padding: 16px;
-            border-color: #f1f5f9;
-        }
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
     .user-name {
         font-weight: 600;
-        color: var(--text-dark);
+        color: var(--text);
+        line-height: 1.3;
     }
 
-    .user-email {
+    .user-id {
+        font-family: 'DM Mono', monospace;
+        font-size: .72rem;
         color: var(--text-muted);
-        font-size: 0.875rem;
     }
 
-    /* Row Actions */
-    .row-btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-        border-radius: 6px;
-        margin-right: 4px;
+    /* ── Role badge ───────────────────────────────────────────── */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        white-space: nowrap;
     }
 
-    .status-badge {
-        padding: 4px 8px;
+    .badge-admin {
+        background: #faf5ff;
+        color: #7c3aed;
+        border: 1px solid #e9d5ff;
+    }
+
+    .badge-manager {
+        background: var(--warning-light);
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    .badge-employee {
+        background: var(--primary-light);
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+    }
+
+    /* ── Dept chip ────────────────────────────────────────────── */
+    .dept-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
         border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        background: #ecfdf5;
-        color: var(--success);
+        font-size: .8rem;
+        font-weight: 500;
+        color: #166534;
+    }
+
+    /* ── Email ────────────────────────────────────────────────── */
+    .email-cell {
+        font-size: .82rem;
+        color: var(--text-mid);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .email-cell i {
+            color: var(--text-muted);
+            font-size: .75rem;
+        }
+
+    /* ── Row actions ──────────────────────────────────────────── */
+    .row-actions {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+    }
+
+    .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-mid);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .78rem;
+        transition: background .12s, color .12s, border-color .12s;
+        text-decoration: none;
+    }
+
+        .icon-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: #c7d2fe;
+        }
+
+        .icon-btn.del:hover {
+            background: var(--danger-light);
+            color: var(--danger);
+            border-color: #fecaca;
+        }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .table-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-top: 1px solid var(--border);
+        background: #fafbfc;
+        font-size: .8rem;
+        color: var(--text-muted);
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* ── Empty / loading states ───────────────────────────────── */
+    .state-row td {
+        text-align: center;
+        padding: 56px 20px;
+        color: var(--text-muted);
+    }
+
+    .state-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+        opacity: .4;
+    }
+
+    /* ── Alerts ───────────────────────────────────────────────── */
+    .alert {
+        padding: 12px 18px;
+        border-radius: var(--radius);
+        font-size: .875rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        color: #065f46;
+        border: 1px solid #6ee7b7;
+    }
+
+    .alert-danger {
+        background: var(--danger-light);
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    /* ── Skeleton shimmer ─────────────────────────────────────── */
+    @@keyframes shimmer {
+        0% {
+            background-position: -800px 0;
+        }
+
+        100% {
+            background-position: 800px 0;
+        }
+    }
+
+    .skeleton {
+        display: inline-block;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 800px 100%;
+        animation: shimmer 1.4s infinite;
     }
 </style>
 
-<div class="container mt-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a asp-controller="AdminView" asp-action="AdminPanel">
-                    <i class="fa-solid fa-house-gear me-1"></i> Admin Control
-                </a>
-            </li>
-            <li class="breadcrumb-item active">User Management</li>
-        </ol>
-    </nav>
+<div class="um-page">
 
-    <div class="management-card">
-        <div class="card-header-flex">
-            <h2 class="h4 fw-bold mb-0">User Directory</h2>
-            <span class="badge bg-light text-dark border">Total Users: <span id="userCount">0</span></span>
+    @* ── Alerts ────────────────────────────────────────────────── *@
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fa-solid fa-circle-check"></i> @TempData["Success"]
         </div>
-
-        <!-- Unified Action Bar -->
-        <div class="action-bar">
-            <form action="/Admin/CreateUser" method="get">
-                <button type="submit" class="btn-action btn-create">
-                    <i class="fa-solid fa-plus"></i> Create User
-                </button>
-            </form>
-
-            <form action="/Admin/UpdateUser" method="get">
-                <button type="submit" class="btn-action">
-                    <i class="fa-solid fa-pen-to-square"></i> Bulk Update
-                </button>
-            </form>
-
-            <form action="/Admin/DeleteManagement" method="get">
-                <button type="submit" class="btn-action text-danger">
-                    <i class="fa-solid fa-trash-can"></i> Delete Mode
-                </button>
-            </form>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fa-solid fa-triangle-exclamation"></i> @TempData["Error"]
         </div>
+    }
 
-        <div class="table-container">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>User Details</th>
-                            <th>Email Address</th>
-                            <th>Status</th>
-                            <th class="text-end">Quick Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userTable">
-                        <!-- Placeholder for JS Loading -->
-                        <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-circle-notch fa-spin me-2"></i> Fetching system users...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    @* ── Breadcrumb ─────────────────────────────────────────────── *@
+    <ol class="breadcrumb">
+        <li>
+            <a asp-controller="AdminView" asp-action="AdminPanel">
+                <i class="fa-solid fa-house-gear"></i> Admin Control
+            </a>
+        </li>
+        <li class="breadcrumb-sep"><i class="fa-solid fa-chevron-right" style="font-size:.65rem"></i></li>
+        <li>User Management</li>
+    </ol>
+
+    @* ── Heading ─────────────────────────────────────────────────── *@
+    <div class="page-heading">
+        <h1>User <span>Directory</span></h1>
+    </div>
+
+    @* ── Action row ──────────────────────────────────────────────── *@
+    <div class="action-row">
+        <a href="/Admin/CreateUser" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add User
+        </a>
+        <a href="/Admin/UpdateUser" class="btn">
+            <i class="fa-solid fa-pen-to-square"></i> Edit User
+        </a>
+        <a href="/Admin/DeleteManagement" class="btn btn-danger">
+            <i class="fa-solid fa-trash-can"></i> Delete User
+        </a>
+        <button class="btn" onclick="loadUsers()" title="Refresh">
+            <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i> Refresh
+        </button>
+    </div>
+
+    @* ── Stats bar ───────────────────────────────────────────────── *@
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-chip">
+            <span class="dot" style="background:#e2e8f0"></span>
+            Total <span class="count" id="statTotal">—</span>
+        </div>
+        <div class="stat-chip">
+            <span class="dot" style="background:#7c3aed"></span>
+            Admins <span class="count" id="statAdmin">—</span>
+        </div>
+        <div class="stat-chip">
+            <span class="dot" style="background:#f59e0b"></span>
+            Managers <span class="count" id="statManager">—</span>
+        </div>
+        <div class="stat-chip">
+            <span class="dot" style="background:#4f46e5"></span>
+            Employees <span class="count" id="statEmployee">—</span>
+        </div>
+    </div>
+
+    @* ── Search & Filter ─────────────────────────────────────────── *@
+    <div class="search-bar">
+        <div class="search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input class="search-input" id="searchInput" type="text"
+                   placeholder="Search by name, email or department…" oninput="filterTable()">
+        </div>
+        <select class="filter-select" id="roleFilter" onchange="filterTable()">
+            <option value="">All Roles</option>
+            <option value="Admin">Admin</option>
+            <option value="Manager">Manager</option>
+            <option value="Employee">Employee</option>
+        </select>
+        <select class="filter-select" id="deptFilter" onchange="filterTable()">
+            <option value="">All Departments</option>
+        </select>
+    </div>
+
+    @* ── Table card ───────────────────────────────────────────────── *@
+    <div class="card">
+        <div class="table-scroll">
+            <table id="userTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th class="text-end" style="text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr class="state-row">
+                        <td colspan="5">
+                            <span class="skeleton" style="width:60%;height:14px;display:block;margin:0 auto"></span>
+                            <br>
+                            <span class="skeleton" style="width:40%;height:10px;display:block;margin:0 auto"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span id="footerCount">Loading…</span>
+            <span id="footerFiltered" style="display:none;color:#4f46e5;font-weight:600"></span>
         </div>
     </div>
 </div>
+
+<script>
+    // ── Avatar colour palette ─────────────────────────────────────────
+    const AVATAR_COLORS = [
+        ['#e0e7ff','#3730a3'], ['#fef3c7','#92400e'], ['#d1fae5','#065f46'],
+        ['#fce7f3','#9d174d'], ['#e0f2fe','#075985'], ['#f3e8ff','#6b21a8'],
+        ['#ffedd5','#9a3412'], ['#ecfccb','#365314'],
+    ];
+
+    function avatarColor(str) {
+        let h = 0;
+        for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+        return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+    }
+
+    function initials(name) {
+        return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    // ── Role badge ────────────────────────────────────────────────────
+    function roleBadge(role) {
+        const map = {
+            Admin:    ['badge-admin',    'fa-shield-halved', 'Admin'],
+            Manager:  ['badge-manager',  'fa-user-tie',      'Manager'],
+            Employee: ['badge-employee', 'fa-user',          'Employee'],
+        };
+        const [cls, icon, label] = map[role] || ['badge-employee', 'fa-user', role];
+        return `<span class="badge ${cls}"><i class="fa-solid ${icon}"></i>${label}</span>`;
+    }
+
+    // ── State ─────────────────────────────────────────────────────────
+    let allUsers = [];
+
+    // ── Fetch ─────────────────────────────────────────────────────────
+    async function loadUsers() {
+        const icon = document.getElementById('refreshIcon');
+        icon.classList.add('fa-spin');
+
+        try {
+            const res = await fetch('/Admin/GetUsersList');
+            if (!res.ok) throw new Error('Failed to fetch users');
+            allUsers = await res.json();
+            populateDeptFilter();
+            updateStats();
+            renderTable(allUsers);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `
+                <tr class="state-row">
+                    <td colspan="5">
+                        <i class="fa-solid fa-triangle-exclamation state-icon" style="color:#ef4444"></i>
+                        <div style="font-weight:600;color:#ef4444">Could not load users</div>
+                        <div style="font-size:.8rem;margin-top:4px">${e.message}</div>
+                    </td>
+                </tr>`;
+            document.getElementById('footerCount').textContent = 'Error';
+        } finally {
+            icon.classList.remove('fa-spin');
+        }
+    }
+
+    // ── Populate dept filter dropdown ─────────────────────────────────
+    function populateDeptFilter() {
+        const depts = [...new Set(allUsers.map(u => u.departmentName).filter(Boolean))].sort();
+        const sel = document.getElementById('deptFilter');
+        // keep first option
+        sel.innerHTML = '<option value="">All Departments</option>';
+        depts.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d; opt.textContent = d;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ── Stats ─────────────────────────────────────────────────────────
+    function updateStats() {
+        document.getElementById('statTotal').textContent    = allUsers.length;
+        document.getElementById('statAdmin').textContent    = allUsers.filter(u => u.role === 'Admin').length;
+        document.getElementById('statManager').textContent  = allUsers.filter(u => u.role === 'Manager').length;
+        document.getElementById('statEmployee').textContent = allUsers.filter(u => u.role === 'Employee').length;
+    }
+
+    // ── Render ────────────────────────────────────────────────────────
+    function renderTable(users) {
+        const tbody = document.getElementById('tableBody');
+        document.getElementById('footerCount').textContent = `Showing ${users.length} of ${allUsers.length} users`;
+
+        const filtered = document.getElementById('footerFiltered');
+        if (users.length < allUsers.length) {
+            filtered.style.display = '';
+            filtered.textContent = `${allUsers.length - users.length} hidden by filters`;
+        } else {
+            filtered.style.display = 'none';
+        }
+
+        if (users.length === 0) {
+            tbody.innerHTML = `
+                <tr class="state-row">
+                    <td colspan="5">
+                        <i class="fa-solid fa-users-slash state-icon"></i>
+                        <div style="font-weight:600">No users match your filters</div>
+                        <div style="font-size:.8rem;margin-top:4px">Try adjusting the search or role filter</div>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = users.map(u => {
+            const [bg, fg] = avatarColor(u.username);
+            const dept = u.departmentName || '—';
+            return `
+            <tr>
+                <td>
+                    <div class="user-cell">
+                        <div class="avatar" style="background:${bg};color:${fg}">${initials(u.username)}</div>
+                        <div>
+                            <div class="user-name">${escHtml(u.username)}</div>
+                            <div class="user-id">#${u.id}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="email-cell">
+                        <i class="fa-regular fa-envelope"></i>
+                        ${escHtml(u.email)}
+                    </div>
+                </td>
+                <td>${roleBadge(u.role)}</td>
+                <td>
+                    <span class="dept-chip">
+                        <i class="fa-solid fa-building" style="font-size:.7rem"></i>
+                        ${escHtml(dept)}
+                    </span>
+                </td>
+                <td>
+                    <div class="row-actions">
+                        <a href="/Admin/UpdateUser?id=${u.id}" class="icon-btn" title="Edit user">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
+                        <a href="/Admin/DeleteManagement?id=${u.id}" class="icon-btn del" title="Delete user">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ── Filter ────────────────────────────────────────────────────────
+    function filterTable() {
+        const q    = document.getElementById('searchInput').value.toLowerCase();
+        const role = document.getElementById('roleFilter').value;
+        const dept = document.getElementById('deptFilter').value;
+
+        const filtered = allUsers.filter(u => {
+            const matchQ = !q ||
+                u.username.toLowerCase().includes(q) ||
+                u.email.toLowerCase().includes(q) ||
+                (u.departmentName || '').toLowerCase().includes(q);
+            const matchRole = !role || u.role === role;
+            const matchDept = !dept || u.departmentName === dept;
+            return matchQ && matchRole && matchDept;
+        });
+
+        renderTable(filtered);
+    }
+
+    // ── Escape helper ─────────────────────────────────────────────────
+    function escHtml(s) {
+        return String(s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────────
+    loadUsers();
+</script>
